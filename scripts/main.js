@@ -7,6 +7,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   initNavToggle();
   initScrollLanding();
+  initTransparentHeaderOnScroll();
   initTypewriterCaptions();
   initPhotoLightbox();
   initContactForm();
@@ -46,14 +47,38 @@ function initNavToggle() {
   toggle.addEventListener("click", () => {
     const isOpen = nav.classList.toggle("is-open");
     toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
   });
 
   nav.querySelectorAll("a").forEach((link) => {
     link.addEventListener("click", () => {
       nav.classList.remove("is-open");
       toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-label", "Open navigation menu");
     });
   });
+}
+
+/* ---------- Transparent hero header: solid once scrolled past the photo ---------- */
+function initTransparentHeaderOnScroll() {
+  const header = document.querySelector(".site-header--transparent");
+  if (!header) return;
+
+  // collections.html's scroll-landing keeps a full-bleed photo behind the
+  // header the whole time (desktop paging never reveals plain content, and
+  // mobile stacks stay on darkened photo sections too), so it should keep
+  // the light-text treatment throughout rather than switching to solid.
+  if (document.body.classList.contains("has-scroll-landing")) return;
+
+  const getThreshold = () => Math.max(window.innerHeight * 0.75, 120);
+
+  function update() {
+    header.classList.toggle("is-scrolled", window.scrollY > getThreshold());
+  }
+
+  update();
+  window.addEventListener("scroll", update, { passive: true });
+  window.addEventListener("resize", update);
 }
 
 /* ---------- Scroll-landing controller (collections.html) ---------- */
@@ -63,6 +88,14 @@ function initScrollLanding() {
   if (!landing || !sections.length) return;
 
   document.body.classList.add("has-scroll-landing");
+
+  // Desktop pages one section at a time with the other three positioned
+  // off-screen (opacity/transform only — still in the DOM). Below 769px
+  // every section is stacked and visible at once instead (see the
+  // max-width: 768px override in main.css), so only manage focus/AT
+  // visibility for the desktop paged mode — on mobile every section should
+  // stay fully reachable.
+  const isDesktopPaged = window.innerWidth > 768;
 
   let current = 0;
   let isScrolling = false;
@@ -77,6 +110,20 @@ function initScrollLanding() {
   }
   syncDots();
 
+  // Off-screen sections are only opacity/transform-hidden, so without this
+  // a keyboard or screen-reader user could still tab into (or hear) the
+  // three sections not currently on screen.
+  function syncSectionA11y() {
+    if (!isDesktopPaged) return;
+    sections.forEach((section, index) => {
+      const isActive = index === current;
+      section.setAttribute("aria-hidden", String(!isActive));
+      const link = section.querySelector("a");
+      if (link) link.setAttribute("tabindex", isActive ? "0" : "-1");
+    });
+  }
+  syncSectionA11y();
+
   function goTo(index) {
     if (isScrolling || index === current || index < 0 || index >= sections.length) return;
     isScrolling = true;
@@ -88,6 +135,7 @@ function initScrollLanding() {
     sections[current].classList.remove("prev");
     sections[current].classList.add("active");
     syncDots();
+    syncSectionA11y();
 
     setTimeout(() => {
       isScrolling = false;
@@ -151,9 +199,27 @@ function initPhotoLightbox() {
 
   let lastFocused = null;
 
+  // The lightbox overlays the page but everything behind it (header, main
+  // content, footer) stays in the DOM and tabbable by default — `inert`
+  // removes it from both the tab order and the accessibility tree while
+  // open, so keyboard/screen-reader users can't wander behind the modal.
+  const backgroundEls = [
+    document.querySelector(".site-header"),
+    document.getElementById("main"),
+    document.querySelector(".site-footer"),
+  ].filter(Boolean);
+
+  function setBackgroundInert(isInert) {
+    backgroundEls.forEach((el) => {
+      if (isInert) el.setAttribute("inert", "");
+      else el.removeAttribute("inert");
+    });
+  }
+
   function close() {
     lightbox.classList.remove("active");
     lightboxImg.removeAttribute("src");
+    setBackgroundInert(false);
     if (lastFocused) lastFocused.focus();
   }
 
@@ -170,6 +236,7 @@ function initPhotoLightbox() {
       lightboxImg.src = img.currentSrc || img.src;
       lightboxImg.alt = img.alt || "";
       lightbox.classList.add("active");
+      setBackgroundInert(true);
       closeBtn.focus();
     };
 

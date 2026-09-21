@@ -20,7 +20,7 @@
   --color-clay-rgb: 189, 121, 82;
 
   --color-text: #3a2f27;
-  --color-text-muted: #7c6b58;
+  --color-text-muted: #5c4d3f;
   --color-text-on-accent: #fbf8f2;
 
   --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
@@ -300,6 +300,30 @@ p {
   border-color: rgba(251, 246, 236, 0.45);
 }
 
+/* Once scrolled past the hero photo, the transparent/light-text header would
+   otherwise sit over the page's plain light background with poor contrast.
+   .is-scrolled (toggled by scripts/main.js) swaps it to the same solid
+   glass treatment as the inner-page header. */
+.site-header--transparent.is-scrolled {
+  background: rgba(247, 243, 236, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 16px rgba(58, 47, 39, 0.06);
+}
+
+.site-header--transparent.is-scrolled .logo,
+.site-header--transparent.is-scrolled .nav-toggle {
+  color: var(--color-text);
+  text-shadow: none;
+}
+
+.site-header--transparent.is-scrolled .logo span {
+  color: var(--color-accent);
+}
+
+.site-header--transparent.is-scrolled .nav-toggle {
+  border-color: var(--color-border);
+}
+
 .site-header .container {
   display: flex;
   align-items: center;
@@ -428,6 +452,18 @@ p {
   .site-header--transparent .navbar a[aria-current="page"] {
     color: #fbf6ec;
     background: rgba(251, 246, 236, 0.16);
+  }
+
+  .site-header--transparent.is-scrolled .navbar a {
+    color: var(--color-text-muted);
+    text-shadow: none;
+  }
+
+  .site-header--transparent.is-scrolled .navbar a:hover,
+  .site-header--transparent.is-scrolled .navbar a:focus-visible,
+  .site-header--transparent.is-scrolled .navbar a[aria-current="page"] {
+    color: var(--color-text);
+    background: rgba(58, 47, 39, 0.08);
   }
 }
 
@@ -788,8 +824,22 @@ p {
 }
 
 @media (min-width: 700px) {
+  /* Flexbox instead of grid here on purpose: this site's category count has
+     changed several times (3, then 4, then 5), and grid's auto-fit leaves an
+     empty gap under an incomplete last row when the item count doesn't
+     divide evenly into the column count. flex-wrap + justify-content:
+     center instead lets any item count wrap cleanly with the last row
+     centered as a group. */
   .services-grid {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
+  .service-card {
+    flex: 1 1 200px;
+    max-width: 260px;
   }
 }
 
@@ -1123,6 +1173,13 @@ p {
   margin-bottom: var(--space-3);
 }
 
+/* Categories with more than one shoot location (e.g. Graduations: Butcher
+   Jones + ASU) render as separate .photo-grid blocks — without this they'd
+   sit flush against each other with no visual break between locations. */
+.photo-subsection + .photo-subsection {
+  margin-top: var(--space-4);
+}
+
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -1452,6 +1509,7 @@ p {
 .field textarea:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-rgb), 0.25);
 }
 
 .field textarea {
