@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Kaileb Becker, Arizona Photographer</title>
+  <meta name="description" content="Book a session with Kaileb Becker, an Arizona photographer for weddings, proposals, graduations, cars, and portrait photography. Send an inquiry to check availability.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Contact | Kaileb Becker, Arizona Photographer">
+  <meta property="og:description" content="Book a session with Arizona photographer Kaileb Becker — weddings, proposals, graduations, cars, and portraits.">
+  <meta property="og:image" content="https://www.kailebbeckerphotography.com/images/og-image.svg">
+  <meta property="og:url" content="https://www.kailebbeckerphotography.com/contact.html">
+  <link rel="canonical" href="https://www.kailebbeckerphotography.com/contact.html">
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f7f3ec'/%3E%3Ctext x='50' y='68' font-family='Georgia,serif' font-size='60' fill='%233a2f27' text-anchor='middle'%3EK%3C/text%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles/main.css?v=13">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="logo">Kaileb<span>Becker</span></a>
+      <button id="nav-toggle" class="nav-toggle" type="button" aria-label="Open navigation menu" aria-controls="primary-nav" aria-expanded="false">☰</button>
+      <nav class="navbar" id="primary-nav">
+        <a href="index.html">Home</a>
+        <a href="collections.html">Collections</a>
+        <a href="gallery.html">Gallery</a>
+        <a href="pricing.html">Pricing</a>
+        <a href="about.html">About</a>
+        <a href="contact.html" aria-current="page">Contact</a>
+      </nav>
+      <a href="contact.html" class="header-cta">Book a Session <span class="arrow">→</span></a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <div class="container">
+        <span class="section-eyebrow">Contact</span>
+        <h1>Let's book your session</h1>
+        <p>Tell me a bit about what you're looking for and I'll get back to you to check availability and next steps.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container contact-layout">
+        <div class="contact-info-card reveal">
+          <h2>Contact info</h2>
+          <dl class="contact-info-list">
+            <div>
+              <dt>Email</dt>
+              <dd><a href="mailto:kaibecker13@gmail.com">kaibecker13@gmail.com</a></dd>
+            </div>
+            <div>
+              <dt>Phone</dt>
+              <dd><a href="tel:+14804048969">(480) 404-8969</a></dd>
+            </div>
+            <div>
+              <dt>Instagram</dt>
+              <dd><a href="https://www.instagram.com/chai_photographyy" target="_blank" rel="noopener noreferrer">@chai_photographyy</a></dd>
+            </div>
+            <div>
+              <dt>Location</dt>
+              <dd>Based in Arizona — available for travel</dd>
+            </div>
+          </dl>
+        </div>
+
+        <form class="contact-form reveal" id="contact-form" novalidate>
+          <div class="form-row two-col">
+            <div class="field">
+              <label for="name">Name</label>
+              <input type="text" id="name" name="name" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" autocomplete="email" required>
+            </div>
+          </div>
+
+          <div class="form-row two-col">
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" name="phone" autocomplete="tel">
+            </div>
+            <div class="field">
+              <label for="sessionType">Session type</label>
+              <select id="sessionType" name="sessionType" required>
+                <option value="" selected disabled>Select a session type</option>
+                <option value="Weddings">Weddings</option>
+                <option value="Proposals">Proposals</option>
+                <option value="Graduations">Graduations</option>
+                <option value="Cars">Cars</option>
+                <option value="Portraits">Portraits</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="discountCode">Discount code (optional)</label>
+            <input type="text" id="discountCode" name="discountCode" placeholder="Have a discount code? Enter it here">
+          </div>
+
+          <div class="form-row two-col">
+            <div class="field">
+              <label for="preferredDate">Preferred date</label>
+              <input type="date" id="preferredDate" name="preferredDate">
+            </div>
+            <div class="field">
+              <label for="location">Location</label>
+              <input type="text" id="location" name="location" placeholder="City or venue">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" placeholder="Tell me about your session, timeline, and vision." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Send Inquiry →</button>
+
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">Kaileb<span>Becker</span></a>
+        <p>Arizona-based photographer specializing in weddings, proposals, graduations, cars, and portraits.</p>
+      </div>
+      <div>
+        <h3 class="footer-heading">Explore</h3>
+        <div class="footer-links">
+          <a href="index.html">Home</a>
+          <a href="collections.html">Collections</a>
+          <a href="gallery.html">Gallery</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer-heading">Get in touch</h3>
+        <div class="footer-links">
+          <a href="mailto:kaibecker13@gmail.com">kaibecker13@gmail.com</a>
+          <a href="tel:+14804048969">(480) 404-8969</a>
+          <span>Based in Arizona</span>
+        </div>
+        <div class="footer-social" style="margin-top: 1rem;">
+          <a href="https://www.instagram.com/chai_photographyy" target="_blank" rel="noopener noreferrer" aria-label="Instagram">IG</a>
+        </div>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <span>&copy; 2026 Kaileb Becker Photography. All rights reserved.</span>
+      <span>Arizona Photographer</span>
+    </div>
+  </footer>
+
+  <script src="scripts/main.js?v=4"></script>
+</body>
+</html>

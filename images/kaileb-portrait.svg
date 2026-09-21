@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Placeholder portrait of Kaileb Becker">
+  <defs>
+    <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e3d3ae"/>
+      <stop offset="100%" stop-color="#f2ead9"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="1000" fill="url(#pg)"/>
+  <circle cx="400" cy="380" r="150" fill="#7c9d72" opacity="0.28"/>
+  <path d="M220,900 C220,700 580,700 580,900 Z" fill="#7c9d72" opacity="0.28"/>
+  <text x="400" y="960" font-family="Georgia, serif" font-size="26" fill="#3a2f27" text-anchor="middle" letter-spacing="3">KAILEB BECKER</text>
+</svg>

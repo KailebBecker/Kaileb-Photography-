@@ -1,0 +1,1586 @@
+/* ==========================================================================
+   Kaileb Becker Photography — main.css
+   Mobile-first. Breakpoints: 600px (tablet), 1024px (desktop).
+   ========================================================================== */
+
+:root {
+  /* Warm, light, no-black photography palette */
+  --color-bg: #f7f3ec;
+  --color-bg-alt: #ecdfc6;
+  --color-surface: #fffdf9;
+  --color-surface-raised: #ffffff;
+  --color-border: rgba(58, 47, 39, 0.14);
+
+  --color-accent: #7c9d72;
+  --color-accent-light: #a9c7a3;
+  --color-accent-dark: #55744c;
+  --color-accent-rgb: 124, 157, 114;
+
+  --color-clay: #bd7952;
+  --color-clay-rgb: 189, 121, 82;
+
+  --color-text: #3a2f27;
+  --color-text-muted: #7c6b58;
+  --color-text-on-accent: #fbf8f2;
+
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --container: 1180px;
+  --radius-pill: 999px;
+  --radius-card: 16px;
+  --radius-input: 8px;
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+  --space-6: 6rem;
+
+  --shadow-card: 0 12px 30px rgba(58, 47, 39, 0.12);
+  color-scheme: light;
+}
+
+/* ---------- Reset ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: 1.1;
+  margin: 0;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--space-2);
+}
+
+@media (min-width: 600px) {
+  .container {
+    padding-inline: var(--space-3);
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -60px;
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  padding: 0.6em 1em;
+  border-radius: var(--radius-input);
+  z-index: 1000;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: var(--space-2);
+}
+
+/* ---------- Scroll reveal (fade/slide-up on scroll) ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------- Editorial accent word (sparingly used clay highlight) ---------- */
+.accent-word {
+  font-style: italic;
+  color: var(--color-clay);
+}
+
+/* ---------- Buttons & links ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.85em 1.6em;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  box-shadow: 0 6px 18px rgba(var(--color-accent-rgb), 0.35);
+  color: var(--color-text-on-accent);
+}
+
+.btn-primary:hover,
+.btn-primary:focus-visible {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn-outline:hover,
+.btn-outline:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-accent-dark);
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.text-link:hover,
+.text-link:focus-visible {
+  border-color: currentColor;
+  color: var(--color-text);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* ---------- Pill badges (used outside the hero, e.g. services/about) ---------- */
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: var(--space-3);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.45em 1em;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: rgba(58, 47, 39, 0.05);
+  color: var(--color-accent-dark);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+/* ---------- Header / nav ---------- */
+/* "Clear glass" treatment (iOS-style): heavy blur + saturation does the
+   work of separating the bar from what's behind it, so the tint itself
+   can stay very light and the content underneath reads through clearly. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(247, 243, 236, 0.55);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 16px rgba(58, 47, 39, 0.06);
+}
+
+/* Used on the homepage/collections so the header floats over the hero photo. */
+.site-header--transparent {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 60%, rgba(255, 255, 255, 0) 100%);
+  border-bottom: none;
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Glass over a photo still needs light/cream nav text (matching the
+   hero's own --hero-text treatment) with a firm shadow for legibility,
+   since the tint itself is now too light to darken the photo for contrast. */
+.site-header--transparent .logo,
+.site-header--transparent .nav-toggle {
+  color: #fbf6ec;
+  text-shadow: 0 1px 4px rgba(58, 38, 22, 0.6), 0 4px 16px rgba(58, 38, 22, 0.35);
+}
+
+.site-header--transparent .logo span {
+  color: var(--color-accent-light);
+}
+
+.site-header--transparent .nav-toggle {
+  border-color: rgba(251, 246, 236, 0.45);
+}
+
+.site-header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--space-2);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+}
+
+.logo span {
+  color: var(--color-accent);
+}
+
+.nav-toggle {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  color: var(--color-text);
+  font-size: 1.1rem;
+  width: 42px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.navbar {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-alt);
+  border-bottom: 1px solid var(--color-border);
+  flex-direction: column;
+  padding: var(--space-2);
+  display: none;
+}
+
+.navbar.is-open {
+  display: flex;
+}
+
+.navbar a {
+  padding: 0.75em var(--space-2);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-input);
+}
+
+.navbar a:hover,
+.navbar a:focus-visible,
+.navbar a[aria-current="page"] {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.header-cta {
+  display: none;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.7em 1.6em;
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-on-accent);
+  font-weight: 500;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+}
+
+.header-cta:hover,
+.header-cta:focus-visible {
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+  color: var(--color-text-on-accent);
+}
+
+.header-cta .arrow {
+  transition: transform 0.25s ease;
+}
+
+.header-cta:hover .arrow {
+  transform: translateX(3px);
+}
+
+@media (min-width: 900px) {
+  .nav-toggle {
+    display: none;
+  }
+
+  .navbar {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    background: none;
+    border: none;
+    padding: 0;
+    gap: var(--space-1);
+  }
+
+  .navbar a[aria-current="page"] {
+    background: rgba(58, 47, 39, 0.08);
+  }
+
+  .header-cta {
+    display: inline-flex;
+  }
+
+  /* Desktop nav links sit directly on the transparent header's warm
+     scrim (over the hero photo), so they need light text, not espresso. */
+  .site-header--transparent .navbar a {
+    color: rgba(251, 246, 236, 0.9);
+    text-shadow: 0 1px 4px rgba(58, 38, 22, 0.6), 0 4px 16px rgba(58, 38, 22, 0.35);
+  }
+
+  .site-header--transparent .navbar a:hover,
+  .site-header--transparent .navbar a:focus-visible,
+  .site-header--transparent .navbar a[aria-current="page"] {
+    color: #fbf6ec;
+    background: rgba(251, 246, 236, 0.16);
+  }
+}
+
+/* ---------- Hero (matches the recovered PhotographyHero.css design) ---------- */
+.photo-hero {
+  --hero-text: #fbf6ec;
+
+  position: relative;
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  padding: 9rem 6% 4.75rem;
+  box-sizing: border-box;
+}
+
+.photo-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-image: url("../images/hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+
+  z-index: 0;
+}
+
+.photo-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  /* Soft warm scrim (never black) so the photo stays the loudest thing on the page */
+  background: linear-gradient(
+    100deg,
+    rgba(64, 42, 26, 0.62) 0%,
+    rgba(64, 42, 26, 0.44) 24%,
+    rgba(64, 42, 26, 0.2) 48%,
+    rgba(64, 42, 26, 0.05) 68%,
+    rgba(64, 42, 26, 0) 100%
+  );
+
+  z-index: 2;
+}
+
+/* Subtle film-grain texture — reinforces "photograph" over "flat UI panel" */
+.hero-grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+.photo-hero-top,
+.photo-hero-bottom {
+  position: relative;
+  z-index: 3;
+}
+
+.photo-hero-intro {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  max-width: 340px;
+  color: var(--hero-text);
+  text-shadow: 0 2px 10px rgba(58, 38, 22, 0.4);
+}
+
+.photo-hero-year {
+  margin-top: 1rem;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  color: var(--color-accent-light);
+  text-shadow: 0 2px 10px rgba(58, 38, 22, 0.4);
+}
+
+.photo-hero-wordmark {
+  text-shadow: 0 6px 24px rgba(58, 38, 22, 0.35), 0 2px 10px rgba(58, 38, 22, 0.3);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(3rem, 12vw, 9rem);
+  line-height: 0.95;
+  color: var(--hero-text);
+}
+
+.photo-hero-wordmark span {
+  display: block;
+}
+
+.wordmark-accent {
+  color: var(--color-accent);
+}
+
+.photo-hero-row {
+  margin-top: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.75rem;
+  flex-wrap: wrap;
+}
+
+.hero-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+
+  padding: 0.95em 2.1em;
+  background: rgba(var(--color-accent-rgb), 0.24);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.65);
+  border-radius: var(--radius-pill);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 4px 24px rgba(58, 38, 22, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+  color: var(--hero-text);
+
+  transition: all 0.3s ease;
+}
+
+.hero-explore-btn:hover,
+.hero-explore-btn:focus-visible {
+  background: rgba(var(--color-accent-rgb), 0.4);
+  border-color: var(--color-accent);
+  color: var(--hero-text);
+  transform: translateY(-2px);
+}
+
+.hero-explore-btn .arrow {
+  transition: transform 0.3s ease;
+}
+
+.hero-explore-btn:hover .arrow {
+  transform: translateX(4px);
+}
+
+.hero-gallery-link {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--hero-text);
+  text-shadow: 0 2px 10px rgba(58, 38, 22, 0.45);
+  border-bottom: 1px solid rgba(251, 246, 236, 0.5);
+  padding-bottom: 2px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-gallery-link:hover,
+.hero-gallery-link:focus-visible {
+  color: var(--color-accent-light);
+  border-color: var(--color-accent-light);
+}
+
+@media (max-width: 600px) {
+  .photo-hero {
+    padding: 7.5rem 6% 3rem;
+    text-align: center;
+  }
+
+  .photo-hero::after {
+    background: linear-gradient(180deg, rgba(64, 42, 26, 0.32) 0%, rgba(64, 42, 26, 0.62) 100%);
+  }
+
+  .photo-hero-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .photo-hero-intro {
+    max-width: 100%;
+  }
+
+  .photo-hero-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .photo-hero-wordmark {
+    text-align: center;
+  }
+
+  .photo-hero-row {
+    justify-content: center;
+  }
+}
+
+/* ---------- Sections ---------- */
+.section {
+  padding-block: var(--space-6);
+}
+
+.section-alt {
+  background: var(--color-bg-alt);
+}
+
+.section-head {
+  max-width: 60ch;
+  margin-bottom: var(--space-4);
+}
+
+.section-eyebrow {
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.section-title {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin-top: var(--space-1);
+}
+
+.section-foot {
+  margin-top: var(--space-4);
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- Services grid ---------- */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.service-card {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: var(--space-3);
+  overflow: hidden;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.service-card:hover,
+.service-card:focus-visible {
+  border-color: var(--color-accent);
+  transform: translateY(-4px);
+  background: var(--color-surface-raised);
+}
+
+.service-card .card-index {
+  color: var(--color-accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.service-card h3 {
+  font-size: 1.3rem;
+  margin-top: var(--space-2);
+}
+
+.service-card p {
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  margin-top: 0.5em;
+  margin-bottom: var(--space-2);
+}
+
+.service-card .card-link {
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* ---------- Pricing cards (reuses .service-card) ---------- */
+.pricing-card {
+  scroll-margin-top: 5.5rem;
+}
+
+.service-card .price-tag {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-clay);
+  margin-top: 0.5em;
+}
+
+.price-unit {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.price-includes {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.price-includes li {
+  padding-left: 1.1em;
+  position: relative;
+}
+
+.price-includes li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--color-accent);
+}
+
+.all-sessions-note {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-top: var(--space-4);
+}
+
+/* ---------- Callout (dashed, e.g. pricing page's "Good to know") ---------- */
+.callout {
+  max-width: 640px;
+  margin: var(--space-4) auto 0;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: var(--space-3);
+}
+
+.callout h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5em;
+}
+
+.callout p {
+  color: var(--color-text-muted);
+  margin-bottom: 0.6em;
+}
+
+.callout p:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 700px) {
+  .services-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+/* ---------- Homepage teaser grid ---------- */
+.teaser-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.teaser-item {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  padding: 0;
+  display: block;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.teaser-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.teaser-item:hover,
+.teaser-item:focus-visible {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 18px 40px rgba(58, 47, 39, 0.18);
+}
+
+.teaser-item:hover img,
+.teaser-item:focus-visible img {
+  transform: scale(1.03);
+}
+
+@media (min-width: 700px) {
+  .teaser-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------- Collections (scroll-landing, matches recovered PhotographyCollections/Photography.css) ---------- */
+.scroll-landing {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.scroll-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  height: 100vh;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8%;
+
+  opacity: 0;
+  transform: translateY(100%);
+  transition: all 0.8s ease;
+
+  overflow: hidden;
+}
+
+.scroll-section.active {
+  opacity: 1;
+  transform: translateY(0);
+  z-index: 2;
+}
+
+.scroll-section.prev {
+  transform: translateY(-100%);
+}
+
+.scroll-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.15) contrast(1.05) brightness(1.02);
+
+  z-index: 0;
+}
+
+.scroll-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    100deg,
+    rgba(58, 38, 22, 0.75) 0%,
+    rgba(58, 38, 22, 0.5) 45%,
+    rgba(58, 38, 22, 0.26) 72%,
+    rgba(58, 38, 22, 0.12) 100%
+  );
+
+  z-index: 1;
+}
+
+.scroll-section a {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+
+  max-width: 560px;
+
+  text-decoration: none;
+  text-align: right;
+
+  opacity: 0.45;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.scroll-section.active a {
+  opacity: 1;
+  transform: translateX(-10px);
+}
+
+.scroll-section a:hover {
+  opacity: 1;
+}
+
+.scroll-section .eyebrow {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(251, 246, 236, 0.82);
+  text-shadow: 0 2px 10px rgba(58, 38, 22, 0.5);
+}
+
+.scroll-section .hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  font-weight: 600;
+  line-height: 1.05;
+  color: #fbf6ec;
+  text-shadow: 0 4px 12px rgba(58, 38, 22, 0.55), 0 12px 45px rgba(58, 38, 22, 0.4);
+}
+
+.scroll-section .tagline {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 300;
+  font-style: italic;
+  max-width: 380px;
+  color: rgba(251, 246, 236, 0.9);
+  text-shadow: 0 2px 12px rgba(58, 38, 22, 0.45);
+}
+
+.scroll-section .cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+
+  margin-top: 0.4rem;
+  padding: 0.9em 2em;
+
+  border: 1.5px solid var(--color-accent-light);
+  border-radius: var(--radius-pill);
+
+  font-family: var(--font-body);
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  color: #fbf6ec;
+
+  transition: all 0.3s ease;
+}
+
+.scroll-section a:hover .hero-title {
+  color: var(--color-accent-light);
+}
+
+.scroll-section a:hover .cta {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+.scroll-section a:hover .cta .arrow {
+  transform: translateX(4px);
+}
+
+.scroll-section .cta .arrow {
+  transition: transform 0.3s ease;
+}
+
+/* Background photos per collection */
+.scroll-section:nth-child(1)::before {
+  background-image: url("../images/graduations/ButcherJones8.jpg");
+}
+
+.scroll-section:nth-child(2)::before {
+  background-image: url("../images/proposals/Proposal1.jpg");
+}
+
+.scroll-section:nth-child(3)::before {
+  background-image: url("../images/cars/Car3.jpg");
+}
+
+.scroll-section:nth-child(4)::before {
+  background-image: url("../images/portraits/portrait-01.svg");
+}
+
+.scroll-dots {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.dot {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 241, 232, 0.35) 0 5px, transparent 6px);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  background: radial-gradient(circle, rgba(244, 241, 232, 0.65) 0 5px, transparent 6px);
+}
+
+.dot.active {
+  background: radial-gradient(circle, var(--color-accent) 0 6px, transparent 7px);
+  transform: scale(1.25);
+}
+
+.scroll-section.fade-out {
+  opacity: 0;
+  transform: scale(1.02);
+  transition: all 0.5s ease;
+}
+
+.scroll-section.fade-out a {
+  transform: translateX(-30px);
+  opacity: 0;
+}
+
+@media (min-width: 769px) {
+  body.has-scroll-landing {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 768px) {
+  .scroll-landing {
+    height: auto;
+    overflow: visible;
+  }
+
+  .scroll-section {
+    position: relative;
+    opacity: 1 !important;
+    transform: none !important;
+
+    min-height: 100vh;
+    justify-content: center;
+    padding: 0 8%;
+    text-align: center;
+  }
+
+  .scroll-section::after {
+    background: linear-gradient(180deg, rgba(58, 38, 22, 0.18) 0%, rgba(58, 38, 22, 0.58) 100%);
+  }
+
+  .scroll-section a {
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+    opacity: 1;
+    transform: none;
+  }
+
+  .scroll-dots {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-section,
+  .scroll-section a,
+  .dot {
+    transition: none !important;
+  }
+}
+
+/* ---------- Photo grid (gallery page, matches recovered PhotosPage/Photos.css) ---------- */
+.photos {
+  padding: var(--space-6) 6%;
+  background: var(--color-bg);
+}
+
+.category-block {
+  margin-bottom: var(--space-6);
+  scroll-margin-top: 5.5rem;
+}
+
+.category-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 700px) {
+  .photo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.photo-item {
+  background: var(--color-surface);
+  padding: 10px 10px 48px;
+  border-radius: 10px;
+
+  box-shadow: 0 4px 10px rgba(58, 47, 39, 0.07), 0 14px 32px rgba(58, 47, 39, 0.1);
+  border: 1px solid var(--color-border);
+
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.photo-item:nth-child(odd) {
+  transform: rotate(-1deg);
+}
+
+.photo-item:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.photo-item img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.15) contrast(1.05) brightness(1.02);
+}
+
+.photo-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 48px;
+
+  background: rgba(58, 38, 22, 0.58);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #fbf6ec;
+  font-size: 1rem;
+  letter-spacing: 2px;
+
+  opacity: 0;
+  transition: 0.3s ease;
+  pointer-events: none;
+}
+
+.photo-item:hover,
+.photo-item:focus-visible {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(58, 47, 39, 0.1), 0 22px 44px rgba(58, 47, 39, 0.16);
+}
+
+.photo-item:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 4px;
+}
+
+.photo-item:hover img {
+  transform: scale(1.03);
+}
+
+.photo-item:hover .photo-overlay {
+  opacity: 1;
+}
+
+.photo-caption {
+  position: absolute;
+  bottom: 14px;
+  left: 8px;
+  right: 8px;
+  width: auto;
+  margin: 0;
+  line-height: 1.2;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  font-family: "Special Elite", monospace;
+}
+
+.typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 220px;
+  width: 0;
+}
+
+.typewriter.animate {
+  animation: typing 1.2s steps(24, end) forwards;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .photo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-item,
+  .photo-item img,
+  .photo-overlay {
+    transition: none;
+  }
+
+  .typewriter {
+    width: auto;
+    white-space: normal;
+  }
+
+  .typewriter.animate {
+    animation: none;
+  }
+}
+
+/* ---------- Lightbox (matches recovered lightbox.js / Photos.css) ---------- */
+.lightbox {
+  display: none;
+  position: fixed;
+  z-index: 2000;
+  cursor: zoom-out;
+  inset: 0;
+  background: rgba(32, 22, 14, 0.92);
+}
+
+.lightbox.active {
+  display: block;
+}
+
+.lightbox-content {
+  display: block;
+  margin: auto;
+  max-width: 90%;
+  max-height: 90%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 2.75rem;
+  line-height: 1;
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ---------- About page ---------- */
+.about-grid {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.about-portrait {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+.about-story h2 {
+  font-size: 1.8rem;
+  margin-bottom: var(--space-2);
+}
+
+.about-story p {
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 900px) {
+  .about-grid {
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+}
+
+.testimonial-grid {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.testimonial-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+}
+
+.testimonial-quote {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--color-text);
+}
+
+.testimonial-name {
+  margin-top: var(--space-2);
+  color: var(--color-accent-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.testimonial-placeholder {
+  border-style: dashed;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (min-width: 700px) {
+  .testimonial-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ---------- Contact page ---------- */
+.contact-layout {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.contact-info-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  align-self: start;
+}
+
+.contact-info-card h2 {
+  font-size: 1.3rem;
+  margin-bottom: var(--space-2);
+}
+
+.contact-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.contact-info-list dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  margin-bottom: 0.2em;
+}
+
+.contact-info-list dd {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.contact-info-list a:hover {
+  color: var(--color-accent-dark);
+}
+
+.contact-form {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-row {
+  display: grid;
+  gap: var(--space-2);
+}
+
+@media (min-width: 700px) {
+  .form-row.two-col {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .contact-layout {
+    grid-template-columns: 0.9fr 1.4fr;
+  }
+}
+
+.field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4em;
+  color: var(--color-text-muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0.75em 0.9em;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-status {
+  padding: 0.9em 1.1em;
+  border-radius: var(--radius-input);
+  font-size: 0.9rem;
+  display: none;
+}
+
+.form-status.is-success {
+  display: block;
+  background: rgba(var(--color-accent-rgb), 0.16);
+  border: 1px solid var(--color-accent);
+  color: var(--color-text);
+}
+
+/* ---------- Footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+  padding-block: var(--space-4);
+}
+
+.footer-grid {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.footer-brand .logo {
+  display: inline-block;
+  margin-bottom: 0.5em;
+}
+
+.footer-brand p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  max-width: 32ch;
+}
+
+.footer-heading {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+}
+
+.footer-links a:hover {
+  color: var(--color-accent-dark);
+}
+
+.footer-social {
+  display: flex;
+  gap: 0.8em;
+}
+
+.footer-social a {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.footer-social a:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-dark);
+}
+
+.footer-bottom {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: space-between;
+}
+
+@media (min-width: 700px) {
+  .footer-grid {
+    grid-template-columns: 1.4fr 1fr 1fr;
+  }
+}
+
+/* ---------- Page hero (inner pages) ---------- */
+.page-hero {
+  padding-block: var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-alt);
+}
+
+.page-hero .section-eyebrow {
+  display: block;
+}
+
+.page-hero h1 {
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  margin-top: var(--space-1);
+}
+
+.page-hero p {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  max-width: 55ch;
+}
+
+/* Site now shares a single warm, light palette everywhere (see :root) —
+   there is no separate dark/cream theme to switch between per page. */
+main {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
