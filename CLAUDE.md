@@ -143,3 +143,13 @@ will go later.
 
 Hosting and the real contact-form backend are not decided yet — see
 BACKEND.md. Don't build anything that assumes a specific host.
+
+## Photography Website V1 (business-application roadmap)
+
+The site is being evolved from a static portfolio into a working booking/
+inquiry business site. For "Continue Photography Website V1", start at
+`docs/STATE.md` (current milestone + session procedure), then
+`docs/ROADMAP.md`. Spec: `docs/V1-SPEC.md`; architecture/calendar/security:
+`docs/ARCHITECTURE.md`; baseline audit: `docs/AUDIT.md`. The "Explicitly
+deferred" hosting note above stays in force until owner gate G1 is answered
+in `docs/STATE.md`.
