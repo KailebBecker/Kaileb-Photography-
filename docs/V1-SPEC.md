@@ -37,7 +37,7 @@ Inputs, evaluated server-side only, combined as a **union of unavailability** (a
 3. **Confirmed sessions** (from Requests).
 4. **External calendar free/busy (V1.1, optional):** busy intervals only, no event data stored. See ARCHITECTURE.md §Calendar.
 
-Overlap rule: union wins. A manual "open override" for a date that external calendar shows busy is **V1.1** and must be an explicit owner action. If external sync fails or is stale (>N hours), the system **fails closed to manual + rules only and flags the owner** — it never shows availability based on unknown data without warning, and it must keep working with *no* external calendar at all.
+Overlap rule: union wins. A manual "open override" for a date that external calendar shows busy is **V1.1** and must be an explicit owner action. External-calendar failure must **fail safely**: if a required external conflict source cannot be verified, the system must never silently expose a date as available. Exact degraded-state behavior is decided in the V1.1 calendar milestone (M10). V1 has no external-calendar dependency and is unaffected: manual rules + blocks + confirmed sessions are complete on their own.
 Public API returns a fixed minimal shape: `{ "date": "2026-11-14", "available": true }` (month view returns an array of those). No timestamps, no source, no counts. A test asserts the response shape and that no private strings appear.
 
 ## Owner/admin (V1 minimum)
