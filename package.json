@@ -1,0 +1,14 @@
+{
+  "name": "kaileb-photography",
+  "private": true,
+  "description": "Kaileb Becker Photography — static site. package.json exists only for dev/test tooling; the site itself has no build step.",
+  "scripts": {
+    "serve": "http-server . -p 4173 -c-1",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.50.0",
+    "http-server": "^14.1.1"
+  }
+}

@@ -23,7 +23,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=14">
+  <link rel="stylesheet" href="styles/main.css?v=15">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -46,6 +46,13 @@
 
   <main id="main">
     <h1 class="visually-hidden">Full Gallery</h1>
+
+    <nav class="gallery-jump" aria-label="Gallery categories">
+      <a href="#graduations">Graduations</a>
+      <a href="#proposals">Proposals</a>
+      <a href="#cars">Cars</a>
+      <a href="#portraits">Portraits</a>
+    </nav>
 
     <section class="photos">
       <div class="category-block" id="graduations">
@@ -290,7 +297,10 @@
 
   <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button class="lightbox-close" type="button" aria-label="Close image viewer">&times;</button>
+    <button class="lightbox-prev" type="button" aria-label="Previous image">&#8249;</button>
+    <button class="lightbox-next" type="button" aria-label="Next image">&#8250;</button>
     <img class="lightbox-content" id="lightbox-img" alt="">
+    <p class="lightbox-status" id="lightbox-status" role="status" aria-live="polite"></p>
   </div>
 
   <footer class="site-footer">
@@ -328,6 +338,6 @@
     </div>
   </footer>
 
-  <script src="scripts/main.js?v=5"></script>
+  <script src="scripts/main.js?v=6"></script>
 </body>
 </html>

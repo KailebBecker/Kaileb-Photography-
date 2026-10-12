@@ -15,6 +15,11 @@
   --color-accent-light: #a9c7a3;
   --color-accent-dark: #55744c;
   --color-accent-rgb: 124, 157, 114;
+  /* Accessible shades of the same sage for text / filled buttons on light
+     backgrounds (sage #7c9d72 itself is < 4.5:1 there). Palette direction is
+     still an open owner decision (STATE.md G5); these only fix contrast. */
+  --color-accent-text: #4d6b45;
+  --color-accent-deep: #46613e;
 
   --color-clay: #bd7952;
   --color-clay-rgb: 189, 121, 82;
@@ -118,7 +123,7 @@ p {
   position: absolute;
   left: var(--space-2);
   top: -60px;
-  background: var(--color-accent);
+  background: var(--color-accent-dark);
   color: var(--color-text-on-accent);
   padding: 0.6em 1em;
   border-radius: var(--radius-input);
@@ -130,20 +135,40 @@ p {
   top: var(--space-2);
 }
 
+/* Visible keyboard focus everywhere; light ring where the background is a photo. */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-accent-dark);
+  outline-offset: 3px;
+}
+
+.site-header--transparent:not(.is-scrolled) :focus-visible,
+.photo-hero :focus-visible,
+.scroll-section :focus-visible,
+.scroll-dots :focus-visible,
+.lightbox :focus-visible {
+  outline-color: #fbf6ec;
+}
+
 /* ---------- Scroll reveal (fade/slide-up on scroll) ---------- */
-.reveal {
+/* Progressive enhancement: content is visible by default. main.js adds
+   html.js-enhanced only after its IntersectionObserver is wired up, so a
+   blocked/failed script can never leave content invisible. */
+.js-enhanced .reveal {
   opacity: 0;
   transform: translateY(18px);
   transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.reveal.is-visible {
+.js-enhanced .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
+  .js-enhanced .reveal {
     opacity: 1;
     transform: none;
     transition: none;
@@ -176,15 +201,15 @@ p {
 }
 
 .btn-primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
   box-shadow: 0 6px 18px rgba(var(--color-accent-rgb), 0.35);
   color: var(--color-text-on-accent);
 }
 
 .btn-primary:hover,
 .btn-primary:focus-visible {
-  background: var(--color-accent-dark);
+  background: var(--color-accent-deep);
   border-color: var(--color-accent-dark);
 }
 
@@ -201,6 +226,7 @@ p {
 }
 
 .text-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
@@ -209,6 +235,14 @@ p {
   border-bottom: 1px solid transparent;
   padding-bottom: 2px;
   transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.text-link::before,
+.hero-gallery-link::before {
+  /* invisible hit-area extension to >=44px tall without moving the text */
+  content: "";
+  position: absolute;
+  inset: -12px -8px;
 }
 
 .text-link:hover,
@@ -317,7 +351,7 @@ p {
 }
 
 .site-header--transparent.is-scrolled .logo span {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .site-header--transparent.is-scrolled .nav-toggle {
@@ -328,7 +362,7 @@ p {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-block: var(--space-2);
+  padding-block: 0.8rem;
 }
 
 .logo {
@@ -336,11 +370,14 @@ p {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--color-text);
 }
 
 .logo span {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .nav-toggle {
@@ -349,8 +386,8 @@ p {
   border-radius: var(--radius-input);
   color: var(--color-text);
   font-size: 1.1rem;
-  width: 42px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -391,9 +428,10 @@ p {
   display: none;
   align-items: center;
   gap: 0.6em;
+  min-height: 44px;
   padding: 0.7em 1.6em;
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent);
+  background: var(--color-accent-dark);
+  border: 1px solid var(--color-accent-dark);
   border-radius: var(--radius-pill);
   color: var(--color-text-on-accent);
   font-weight: 500;
@@ -404,8 +442,8 @@ p {
 
 .header-cta:hover,
 .header-cta:focus-visible {
-  background: var(--color-accent-dark);
-  border-color: var(--color-accent-dark);
+  background: var(--color-accent-deep);
+  border-color: var(--color-accent-deep);
   color: var(--color-text-on-accent);
 }
 
@@ -616,6 +654,7 @@ p {
 }
 
 .hero-gallery-link {
+  position: relative;
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 500;
@@ -682,7 +721,7 @@ p {
 }
 
 .section-eyebrow {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.78rem;
@@ -726,7 +765,7 @@ p {
 }
 
 .service-card .card-index {
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -790,7 +829,7 @@ p {
   content: "•";
   position: absolute;
   left: 0;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .all-sessions-note {
@@ -887,20 +926,22 @@ p {
   }
 }
 
-/* ---------- Collections (scroll-landing, matches recovered PhotographyCollections/Photography.css) ---------- */
+/* ---------- Collections (full-bleed scroll-landing, native scrolling) ---------- */
+/* Matches the recovered PhotographyCollections design visually, but never
+   hijacks input: sections are ordinary full-height blocks and the page scrolls
+   natively (wheel, trackpad, touch, keyboard: Space/PageUp/PageDown/Home/End).
+   No scroll-snap on purpose: even "proximity" snapping pulls a short wheel
+   scroll back to the top, which fights the visitor. main.js only layers on
+   enhancements (dot-nav state, dimming of off-screen sections). */
 .scroll-landing {
   position: relative;
-  height: 100vh;
   width: 100%;
-  overflow: hidden;
 }
 
 .scroll-section {
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  height: 100vh;
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
   width: 100%;
 
   display: flex;
@@ -908,21 +949,7 @@ p {
   justify-content: flex-end;
   padding-right: 8%;
 
-  opacity: 0;
-  transform: translateY(100%);
-  transition: all 0.8s ease;
-
   overflow: hidden;
-}
-
-.scroll-section.active {
-  opacity: 1;
-  transform: translateY(0);
-  z-index: 2;
-}
-
-.scroll-section.prev {
-  transform: translateY(-100%);
 }
 
 .scroll-section::before {
@@ -937,6 +964,7 @@ p {
   z-index: 0;
 }
 
+/* Scrim: kept just strong enough for the cream headline; photo stays visible. */
 .scroll-section::after {
   content: "";
   position: absolute;
@@ -944,10 +972,10 @@ p {
 
   background: linear-gradient(
     100deg,
-    rgba(58, 38, 22, 0.75) 0%,
-    rgba(58, 38, 22, 0.5) 45%,
-    rgba(58, 38, 22, 0.26) 72%,
-    rgba(58, 38, 22, 0.12) 100%
+    rgba(58, 38, 22, 0.62) 0%,
+    rgba(58, 38, 22, 0.4) 45%,
+    rgba(58, 38, 22, 0.2) 72%,
+    rgba(58, 38, 22, 0.06) 100%
   );
 
   z-index: 1;
@@ -967,14 +995,13 @@ p {
   text-decoration: none;
   text-align: right;
 
-  opacity: 0.45;
-  transform: translateY(20px);
-  transition: all 0.4s ease;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.scroll-section.active a {
-  opacity: 1;
-  transform: translateX(-10px);
+/* Enhancement only: dim the copy of sections that aren't on screen. */
+.has-scroll-landing .scroll-section:not(.active) a {
+  opacity: 0.45;
+  transform: translateY(20px);
 }
 
 .scroll-section a:hover {
@@ -1034,8 +1061,8 @@ p {
 }
 
 .scroll-section a:hover .cta {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
   color: var(--color-text-on-accent);
 }
 
@@ -1045,6 +1072,11 @@ p {
 
 .scroll-section .cta .arrow {
   transition: transform 0.3s ease;
+}
+
+.scroll-section a:focus-visible {
+  outline-offset: 10px;
+  border-radius: 8px;
 }
 
 /* Background photos per collection */
@@ -1066,78 +1098,56 @@ p {
 
 .scroll-dots {
   position: fixed;
-  right: 2rem;
+  right: 1.2rem;
   top: 50%;
   transform: translateY(-50%);
   z-index: 50;
 
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 0.25rem;
 }
 
+/* 44px hit area; the visible dot is drawn small in the middle. */
 .dot {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(244, 241, 232, 0.35) 0 5px, transparent 6px);
+  background: radial-gradient(circle, rgba(244, 241, 232, 0.55) 0 5px, transparent 6px);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .dot:hover {
-  background: radial-gradient(circle, rgba(244, 241, 232, 0.65) 0 5px, transparent 6px);
+  background: radial-gradient(circle, rgba(244, 241, 232, 0.85) 0 5px, transparent 6px);
 }
 
 .dot.active {
-  background: radial-gradient(circle, var(--color-accent) 0 6px, transparent 7px);
+  background: radial-gradient(circle, var(--color-accent-light) 0 6px, transparent 7px);
   transform: scale(1.25);
 }
 
-.scroll-section.fade-out {
-  opacity: 0;
-  transform: scale(1.02);
-  transition: all 0.5s ease;
-}
-
-.scroll-section.fade-out a {
-  transform: translateX(-30px);
-  opacity: 0;
-}
-
-@media (min-width: 769px) {
-  body.has-scroll-landing {
-    overflow: hidden;
-  }
-}
-
 @media (max-width: 768px) {
-  .scroll-landing {
-    height: auto;
-    overflow: visible;
-  }
-
   .scroll-section {
-    position: relative;
-    opacity: 1 !important;
-    transform: none !important;
-
-    min-height: 100vh;
     justify-content: center;
     padding: 0 8%;
     text-align: center;
   }
 
   .scroll-section::after {
-    background: linear-gradient(180deg, rgba(58, 38, 22, 0.18) 0%, rgba(58, 38, 22, 0.58) 100%);
+    background: linear-gradient(180deg, rgba(58, 38, 22, 0.12) 0%, rgba(58, 38, 22, 0.52) 100%);
   }
 
   .scroll-section a {
     align-items: center;
     text-align: center;
     max-width: 100%;
+  }
+
+  /* On mobile every section is stacked and fully visible; no dimming. */
+  .has-scroll-landing .scroll-section:not(.active) a {
     opacity: 1;
     transform: none;
   }
@@ -1148,11 +1158,47 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .scroll-section,
   .scroll-section a,
   .dot {
     transition: none !important;
   }
+
+  .has-scroll-landing .scroll-section:not(.active) a {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Gallery category jump-nav ---------- */
+.gallery-jump {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: var(--space-3) 6% 0;
+}
+
+.gallery-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.3em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.gallery-jump a:hover {
+  background: var(--color-bg-alt);
+  border-color: var(--color-accent-dark);
+}
+
+.category-block {
+  scroll-margin-top: 5rem;
 }
 
 /* ---------- Photo grid (gallery page, matches recovered PhotosPage/Photos.css) ---------- */
@@ -1277,15 +1323,20 @@ p {
   font-family: "Special Elite", monospace;
 }
 
+/* Captions are plain visible text by default; the typing effect is an
+   enhancement that only applies once main.js sets html.js-enhanced. */
 .typewriter {
+  display: inline-block;
+}
+
+.js-enhanced .typewriter {
   overflow: hidden;
   white-space: nowrap;
-  display: inline-block;
   max-width: 220px;
   width: 0;
 }
 
-.typewriter.animate {
+.js-enhanced .typewriter.animate {
   animation: typing 1.2s steps(24, end) forwards;
 }
 
@@ -1307,17 +1358,18 @@ p {
     transition: none;
   }
 
-  .typewriter {
+  .js-enhanced .typewriter {
     width: auto;
     white-space: normal;
+    max-width: none;
   }
 
-  .typewriter.animate {
+  .js-enhanced .typewriter.animate {
     animation: none;
   }
 }
 
-/* ---------- Lightbox (matches recovered lightbox.js / Photos.css) ---------- */
+/* ---------- Lightbox (matches recovered lightbox.js / Photos.css, plus prev/next) ---------- */
 .lightbox {
   display: none;
   position: fixed;
@@ -1325,6 +1377,7 @@ p {
   cursor: zoom-out;
   inset: 0;
   background: rgba(32, 22, 14, 0.92);
+  touch-action: pan-y pinch-zoom;
 }
 
 .lightbox.active {
@@ -1340,18 +1393,97 @@ p {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  cursor: default;
 }
 
-.lightbox-close {
+.lightbox-close,
+.lightbox-prev,
+.lightbox-next {
   position: absolute;
-  top: 20px;
-  right: 30px;
-  font-size: 2.75rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   color: #fff;
   background: none;
   border: none;
+  border-radius: 50%;
   cursor: pointer;
+}
+
+.lightbox-close {
+  top: 12px;
+  right: 16px;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.lightbox-prev,
+.lightbox-next {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 2.4rem;
+  line-height: 1;
+  background: rgba(32, 22, 14, 0.55);
+}
+
+.lightbox-prev {
+  left: 12px;
+}
+
+.lightbox-next {
+  right: 12px;
+}
+
+.lightbox-close:hover,
+.lightbox-prev:hover,
+.lightbox-next:hover {
+  background: rgba(251, 246, 236, 0.18);
+}
+
+.lightbox-status {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  color: rgba(251, 246, 236, 0.85);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+}
+
+.lightbox.is-single .lightbox-prev,
+.lightbox.is-single .lightbox-next,
+.lightbox.is-single .lightbox-status {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .lightbox-content {
+    max-width: 96%;
+    max-height: calc(100% - 170px);
+  }
+
+  /* Controls sit below the photo on phones so they never cover it. */
+  .lightbox-prev,
+  .lightbox-next {
+    top: auto;
+    bottom: 14px;
+    transform: none;
+  }
+
+  .lightbox-prev {
+    left: calc(50% - 110px);
+  }
+
+  .lightbox-next {
+    right: calc(50% - 110px);
+  }
+
+  .lightbox-status {
+    bottom: 26px;
+  }
 }
 
 /* ---------- About page ---------- */
@@ -1450,7 +1582,7 @@ p {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   margin-bottom: 0.2em;
 }
 
@@ -1517,17 +1649,53 @@ p {
   min-height: 120px;
 }
 
-.form-status {
+/* Static, always-visible notice while there is no inquiry backend (until M5). */
+.form-notice {
   padding: 0.9em 1.1em;
+  border: 1px solid var(--color-clay);
+  border-left-width: 4px;
   border-radius: var(--radius-input);
-  font-size: 0.9rem;
+  background: rgba(var(--color-clay-rgb), 0.1);
+  font-size: 0.92rem;
+  color: var(--color-text);
+}
+
+.form-notice a,
+.form-status a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.field-error {
+  margin: 0.4em 0 0;
+  font-size: 0.85rem;
+  color: #9b2c1c;
+}
+
+.field-error[hidden] {
   display: none;
 }
 
-.form-status.is-success {
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: #9b2c1c;
+}
+
+.form-status {
+  padding: 0.9em 1.1em;
+  border-radius: var(--radius-input);
+  font-size: 0.92rem;
+  display: none;
+}
+
+/* Truthful "can't submit online yet" message (shown after a valid attempt).
+   M5 adds the real success/error states when the backend exists. */
+.form-status.is-unavailable {
   display: block;
-  background: rgba(var(--color-accent-rgb), 0.16);
-  border: 1px solid var(--color-accent);
+  background: rgba(var(--color-clay-rgb), 0.12);
+  border: 1px solid var(--color-clay);
   color: var(--color-text);
 }
 
@@ -1558,7 +1726,7 @@ p {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   margin-bottom: var(--space-2);
 }
 
@@ -1580,8 +1748,8 @@ p {
 }
 
 .footer-social a {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1589,6 +1757,23 @@ p {
   border-radius: 50%;
   font-size: 0.9rem;
   color: var(--color-text-muted);
+}
+
+@media (max-width: 899px), (pointer: coarse) {
+  .footer-links {
+    gap: 0;
+  }
+
+  .footer-links a,
+  .contact-info-list a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .contact-info-list {
+    gap: 0.4rem;
+  }
 }
 
 .footer-social a:hover {

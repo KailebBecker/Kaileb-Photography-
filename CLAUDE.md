@@ -40,9 +40,9 @@ Current site-wide category order (used consistently across index.html
 services, pricing.html cards, and the contact.html dropdown): **Weddings,
 Proposals, Graduations, Cars, Portraits.**
 
-`images/weddings/` still has its old SVG placeholders (unused — no page
-references them). `images/engagements/` and `images/events/` are leftover
-empty folders from the old spec. If a real engagement/event shoot happens,
+The unused `images/weddings/` SVG placeholders and the empty
+`images/engagements/` / `images/events/` folders were removed in M1. If a
+real engagement/event shoot happens,
 add it as its own category the same way Cars, Portraits, and Weddings were
 added — full restore only once there's a plan for real photos, marketing-
 pages-only restore (like Weddings) if photos are still pending.
@@ -89,9 +89,11 @@ placeholder photos and a gallery.html section (currently Graduations,
 Proposals, Cars, Portraits — no Weddings section, see note above), each
 with its own background photo, giant title, tagline, and a
 "View Gallery →" link to that category's
-anchor on gallery.html. Desktop: mouse-wheel pages between sections with
-a fade transition; side dot-nav jumps directly. Mobile: sections stack
-and scroll normally, dot-nav hidden. This is the recovered
+anchor on gallery.html. The page scrolls natively on every
+device (no wheel hijacking, no scroll-snap; Space/PageUp/PageDown work);
+desktop shows a side dot-nav that jumps to a section and tracks the current
+one, and dims the copy of off-screen sections. Mobile: sections stack,
+dot-nav hidden. This is the recovered
 PhotographyCollections.html/Photography.css design, off-white instead of
 the original sage-green.
 
@@ -104,8 +106,11 @@ the original sage-green.
   section background, slight alternating rotation, hover overlay
   ("VIEW IMAGE"), typewriter-effect location caption.
 - Click a photo → simple full-screen lightbox (click outside or × to
-  close, Escape works too). No counter/arrows — matches the recovered
-  design, which didn't have them.
+  close, Escape works too). Prev/next buttons, left/right arrow keys, and
+  swipe move within the photo's own category; a small "Image x of n"
+  counter is shown. Focus is trapped in the dialog and returned to the photo
+  on close.
+- A category jump-nav (`.gallery-jump`) sits above the grids.
 - Lazy-loaded images (`loading="lazy"`).
 - Graduations, Proposals, and Cars have real photos. Portraits has no real
   shoot yet and uses the off-white placeholder graphics in
@@ -124,11 +129,22 @@ Form fields: name, email, phone, session type (dropdown: Weddings /
 Proposals / Graduations / Cars / Portraits), preferred date, location,
 message.
 
-**Submission handling — stub for now, see BACKEND.md.** On submit:
-`console.log` the form data and show a "Thanks, I'll be in touch!"
-success message on the page. Leave a clear comment in the JS marking
-where real submission logic (a `fetch()` POST to a backend endpoint)
-will go later.
+**Submission handling — TEMPORARY, no backend until roadmap M5.** The
+form validates (inline errors, `aria-invalid`) but a valid attempt never
+claims success: it says online submission is not available, sends and logs
+nothing, keeps the visitor's input, and points to the published email/phone.
+A static notice above the form says the same, and the submit button ships
+`disabled` so there is no no-JS path. The real flow replaces
+`INQUIRY_BACKEND_ENABLED` / `submitInquiry()` in `scripts/main.js` (see
+docs/V1-SPEC.md F1). Do not add a mailto/localStorage workaround. The date
+picker's minimum notice (`MIN_LEAD_DAYS`) is a placeholder owner decision.
+
+## Tests
+
+`npm install && npx playwright install chromium` once, then `npm test`
+(starts a local static server; Playwright + axe, desktop and mobile
+profiles). `package.json` exists only for dev tooling — the site has no
+build step. Run before committing UI changes.
 
 ## SEO
 

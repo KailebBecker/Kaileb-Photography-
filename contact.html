@@ -22,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles/main.css?v=14">
+  <link rel="stylesheet" href="styles/main.css?v=15">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -77,14 +77,22 @@
         </div>
 
         <form class="contact-form reveal" id="contact-form" novalidate>
+          <!-- TEMPORARY until the inquiry backend exists (roadmap M5). Remove with the INQUIRY_BACKEND_ENABLED flag in scripts/main.js. -->
+          <p class="form-notice" id="form-notice">
+            <strong>Online inquiries are not available yet.</strong>
+            To request a session, please email <a href="mailto:kaibecker13@gmail.com">kaibecker13@gmail.com</a>
+            or call <a href="tel:+14804048969">(480) 404-8969</a>.
+          </p>
           <div class="form-row two-col">
             <div class="field">
               <label for="name">Name</label>
-              <input type="text" id="name" name="name" autocomplete="name" required>
+              <input type="text" id="name" name="name" autocomplete="name" required aria-describedby="name-error">
+              <p class="field-error" id="name-error" hidden></p>
             </div>
             <div class="field">
               <label for="email">Email</label>
-              <input type="email" id="email" name="email" autocomplete="email" required>
+              <input type="email" id="email" name="email" autocomplete="email" required aria-describedby="email-error">
+              <p class="field-error" id="email-error" hidden></p>
             </div>
           </div>
 
@@ -95,7 +103,7 @@
             </div>
             <div class="field">
               <label for="sessionType">Session type</label>
-              <select id="sessionType" name="sessionType" required>
+              <select id="sessionType" name="sessionType" required aria-describedby="sessionType-error">
                 <option value="" selected disabled>Select a session type</option>
                 <option value="Weddings">Weddings</option>
                 <option value="Proposals">Proposals</option>
@@ -103,6 +111,7 @@
                 <option value="Cars">Cars</option>
                 <option value="Portraits">Portraits</option>
               </select>
+              <p class="field-error" id="sessionType-error" hidden></p>
             </div>
           </div>
 
@@ -114,7 +123,8 @@
           <div class="form-row two-col">
             <div class="field">
               <label for="preferredDate">Preferred date</label>
-              <input type="date" id="preferredDate" name="preferredDate">
+              <input type="date" id="preferredDate" name="preferredDate" aria-describedby="preferredDate-error">
+              <p class="field-error" id="preferredDate-error" hidden></p>
             </div>
             <div class="field">
               <label for="location">Location</label>
@@ -124,10 +134,12 @@
 
           <div class="field">
             <label for="message">Message</label>
-            <textarea id="message" name="message" placeholder="Tell me about your session, timeline, and vision." required></textarea>
+            <textarea id="message" name="message" placeholder="Tell me about your session, timeline, and vision." required aria-describedby="message-error"></textarea>
+            <p class="field-error" id="message-error" hidden></p>
           </div>
 
-          <button type="submit" class="btn btn-primary">Send Inquiry →</button>
+          <!-- Ships disabled: without JS there is no endpoint to submit to. M5 restores the "Send Inquiry" label. -->
+          <button type="submit" class="btn btn-primary" disabled>Check my details <span class="arrow">→</span></button>
 
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </form>
@@ -170,6 +182,6 @@
     </div>
   </footer>
 
-  <script src="scripts/main.js?v=5"></script>
+  <script src="scripts/main.js?v=6"></script>
 </body>
 </html>
