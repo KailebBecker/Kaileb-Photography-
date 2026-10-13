@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test test/*.test.js",
-    "inquiries": "node src/cli.js list",
+    "inquiries": "node src/cli.js",
     "backup": "node src/backup.js"
   },
   "dependencies": {
