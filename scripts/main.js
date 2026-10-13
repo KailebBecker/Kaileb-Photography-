@@ -212,10 +212,43 @@ function initPhotoLightbox() {
     return lightbox.classList.contains("active");
   }
 
+  // The lightbox has its own <picture>. For each photo we hand it the grid
+  // item's AVIF/WebP srcsets (which include the larger widths) with a `sizes`
+  // that matches the dialog's real display box, so it loads a bigger
+  // derivative than the grid did, but not the biggest one on a phone.
+  const lightboxSources = Array.from(lightbox.querySelectorAll("picture source"));
+
+  function lightboxSizes(aspect) {
+    const a = aspect.toFixed(4);
+    return `(max-width: 600px) min(96vw, calc((100vh - 170px) * ${a})), min(90vw, calc(90vh * ${a}))`;
+  }
+
+  function clearLightboxSources() {
+    lightboxSources.forEach((source) => {
+      source.removeAttribute("srcset");
+      source.removeAttribute("sizes");
+    });
+  }
+
   function show(i) {
     index = (i + group.length) % group.length;
-    const img = group[index].querySelector("img");
-    lightboxImg.src = img.currentSrc || img.src;
+    const item = group[index];
+    const img = item.querySelector("img");
+    const picture = item.querySelector("picture");
+    const width = Number(img.getAttribute("width"));
+    const height = Number(img.getAttribute("height"));
+
+    clearLightboxSources();
+    if (picture && width && height) {
+      lightboxSources.forEach((source) => {
+        const from = picture.querySelector(`source[type="${source.type}"]`);
+        if (!from) return;
+        source.setAttribute("srcset", from.getAttribute("srcset"));
+        source.setAttribute("sizes", lightboxSizes(width / height));
+      });
+    }
+    // The <img> src is the JPEG/SVG fallback; picture sources take priority when supported.
+    lightboxImg.src = img.getAttribute("src");
     lightboxImg.alt = img.alt || "";
     if (status) status.textContent = `Image ${index + 1} of ${group.length}`;
   }
@@ -233,6 +266,7 @@ function initPhotoLightbox() {
 
   function close() {
     lightbox.classList.remove("active");
+    clearLightboxSources();
     lightboxImg.removeAttribute("src");
     setBackgroundInert(false);
     if (lastFocused) lastFocused.focus();

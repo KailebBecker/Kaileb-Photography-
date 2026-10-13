@@ -1,0 +1,471 @@
+{
+  "cars/Car1": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "178a992c",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "cars/Car2": {
+    "width": 1362,
+    "height": 908,
+    "hash": "c24be793",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1362
+    ],
+    "fallbackWidth": 1362
+  },
+  "cars/Car3": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "0670caa4",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "cars/Car4": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "2716111f",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "cars/Car5": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "2544caa9",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "cars/Car6": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "14299f16",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU1": {
+    "width": 1588,
+    "height": 2824,
+    "hash": "ce92a088",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1588
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU10": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "771fba9f",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ASU2": {
+    "width": 2000,
+    "height": 3000,
+    "hash": "2548c331",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU3": {
+    "width": 2000,
+    "height": 3000,
+    "hash": "44e738a6",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU4": {
+    "width": 2000,
+    "height": 3000,
+    "hash": "4b85dcd2",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU5": {
+    "width": 2000,
+    "height": 3000,
+    "hash": "f7f6d554",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU6": {
+    "width": 1336,
+    "height": 2003,
+    "hash": "e3865b40",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1336
+    ],
+    "fallbackWidth": 1336
+  },
+  "graduations/ASU7": {
+    "width": 1631,
+    "height": 1087,
+    "hash": "93750a47",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1631
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ASU8": {
+    "width": 1333,
+    "height": 1623,
+    "hash": "bf23d3bf",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ASU9": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "57a1255e",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ButcherJones1": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "816c514d",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones10": {
+    "width": 2000,
+    "height": 1333,
+    "hash": "016be9ca",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ButcherJones11": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "e17997ff",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ButcherJones12": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "845b50db",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ButcherJones13": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "f76ed5a2",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ButcherJones14": {
+    "width": 1333,
+    "height": 2000,
+    "hash": "9617b7c5",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1333
+    ],
+    "fallbackWidth": 1333
+  },
+  "graduations/ButcherJones2": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "ff0351e9",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones3": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "8c3b5e51",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ButcherJones4": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "7cfe41f7",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones5": {
+    "width": 1633,
+    "height": 1088,
+    "hash": "d3c5c305",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      1633
+    ],
+    "fallbackWidth": 1440
+  },
+  "graduations/ButcherJones6": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "38757e83",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones7": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "6f0a5546",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones8": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "2a489e9b",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "graduations/ButcherJones9": {
+    "width": 1088,
+    "height": 1633,
+    "hash": "aa67ffe9",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1088
+    ],
+    "fallbackWidth": 1088
+  },
+  "proposals/Proposal1": {
+    "width": 1200,
+    "height": 1800,
+    "hash": "aaaf6bba",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1200
+    ],
+    "fallbackWidth": 1200
+  },
+  "proposals/Proposal2": {
+    "width": 1200,
+    "height": 1800,
+    "hash": "1a14b44c",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1200
+    ],
+    "fallbackWidth": 1200
+  },
+  "proposals/Proposal3": {
+    "width": 1200,
+    "height": 1800,
+    "hash": "3ac0b5c3",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1200
+    ],
+    "fallbackWidth": 1200
+  },
+  "proposals/Proposal4": {
+    "width": 1500,
+    "height": 1000,
+    "hash": "ea55a7e8",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1500
+    ],
+    "fallbackWidth": 1500
+  },
+  "proposals/Proposal5": {
+    "width": 1000,
+    "height": 1500,
+    "hash": "de438eac",
+    "source": "source",
+    "widths": [
+      480,
+      1000
+    ],
+    "fallbackWidth": 1000
+  },
+  "proposals/Proposal6": {
+    "width": 1000,
+    "height": 1500,
+    "hash": "5470e683",
+    "source": "source",
+    "widths": [
+      480,
+      1000
+    ],
+    "fallbackWidth": 1000
+  },
+  "proposals/Proposal7": {
+    "width": 1000,
+    "height": 1500,
+    "hash": "21698ee0",
+    "source": "source",
+    "widths": [
+      480,
+      1000
+    ],
+    "fallbackWidth": 1000
+  },
+  "proposals/Proposal8": {
+    "width": 2400,
+    "height": 1600,
+    "hash": "e89dad69",
+    "source": "source",
+    "widths": [
+      480,
+      960,
+      1440,
+      2000,
+      2400
+    ],
+    "fallbackWidth": 1440
+  }
+}

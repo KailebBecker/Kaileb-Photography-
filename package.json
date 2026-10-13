@@ -4,11 +4,15 @@
   "description": "Kaileb Becker Photography — static site. package.json exists only for dev/test tooling; the site itself has no build step.",
   "scripts": {
     "serve": "http-server . -p 4173 -c-1",
+    "images": "node scripts/build-images.js",
+    "images:check": "node scripts/build-images.js --check",
+    "measure": "node scripts/measure-images.js",
     "test": "playwright test"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.50.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "sharp": "^0.35.5"
   }
 }
