@@ -5,3 +5,4 @@ test-results/
 playwright-report/
 # Private full-resolution originals — never commit (see scripts/build-images.js)
 originals/
+_site/

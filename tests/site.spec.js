@@ -10,7 +10,7 @@ for (const name of PAGES) {
     page.on("console", (m) => m.type() === "error" && problems.push(m.text()));
     page.on("requestfailed", (r) => problems.push("FAILED " + r.url()));
     page.on("pageerror", (e) => problems.push(e.message));
-    await page.goto(`/${name}.html`);
+    await page.goto(`${name}.html`);
     await page.waitForLoadState("load");
     // Google Fonts are third-party and may be unreachable offline; only fail on first-party problems.
     const own = problems.filter((p) => !/fonts\.(googleapis|gstatic)\.com/.test(p) && !/ERR_(FAILED|INTERNET|NAME)/.test(p));
@@ -23,7 +23,7 @@ for (const name of PAGES) {
 /* ---------- accessibility (axe) ---------- */
 for (const name of PAGES) {
   test(`${name}: axe has no serious/critical violations`, async ({ page }) => {
-    await page.goto(`/${name}.html`);
+    await page.goto(`${name}.html`);
     await page.waitForTimeout(300);
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
     const bad = results.violations.filter((v) => ["serious", "critical"].includes(v.impact));
@@ -33,7 +33,7 @@ for (const name of PAGES) {
 
 /* ---------- touch targets ---------- */
 test("header controls and hero link meet touch-target size", async ({ page }) => {
-  await page.goto("/index.html");
+  await page.goto("index.html");
   for (const sel of ["#nav-toggle", ".site-header .logo", ".header-cta"]) {
     const box = await page.locator(sel).first().boundingBox();
     if (!box) continue; // e.g. nav-toggle is hidden on desktop
@@ -52,7 +52,7 @@ test("header controls and hero link meet touch-target size", async ({ page }) =>
 
 test("mobile: footer and contact links are 44px tall", async ({ page }, info) => {
   test.skip(info.project.name !== "mobile");
-  await page.goto("/contact.html");
+  await page.goto("contact.html");
   const heights = await page.evaluate(() =>
     [...document.querySelectorAll(".footer-links a, .contact-info-list a, .footer-social a")].map((a) => Math.round(a.getBoundingClientRect().height))
   );
@@ -65,7 +65,7 @@ test("reveal + typewriter content is visible with JavaScript disabled", async ({
   const ctx = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const page = await ctx.newPage();
   for (const [file, sel] of [["index", ".service-card"], ["pricing", ".pricing-card"], ["gallery", ".photo-caption"], ["about", ".about-story"]]) {
-    await page.goto(`/${file}.html`);
+    await page.goto(`${file}.html`);
     const m = await page.locator(sel).first().evaluate((e) => ({ o: getComputedStyle(e).opacity, w: e.getBoundingClientRect().width }));
     expect(Number(m.o), file).toBe(1);
     expect(m.w, file).toBeGreaterThan(20);
@@ -74,7 +74,7 @@ test("reveal + typewriter content is visible with JavaScript disabled", async ({
 });
 
 test("reveal content becomes visible with JS on (scrolling in)", async ({ page }) => {
-  await page.goto("/pricing.html");
+  await page.goto("pricing.html");
   const last = page.locator(".pricing-card").last();
   await last.scrollIntoViewIfNeeded();
   await expect(last).toHaveCSS("opacity", "1");
@@ -83,7 +83,7 @@ test("reveal content becomes visible with JS on (scrolling in)", async ({ page }
 test("reveal content is visible under prefers-reduced-motion", async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: "reduce" });
   const page = await ctx.newPage();
-  await page.goto("/gallery.html");
+  await page.goto("gallery.html");
   const cap = page.locator(".photo-caption").first();
   await expect(cap).toHaveCSS("opacity", "1");
   expect(await cap.evaluate((e) => e.getBoundingClientRect().width)).toBeGreaterThan(40);
@@ -93,7 +93,7 @@ test("reveal content is visible under prefers-reduced-motion", async ({ browser 
 /* ---------- navigation (keyboard) ---------- */
 test("mobile nav toggles via keyboard and exposes aria-expanded; Escape closes", async ({ page }, info) => {
   test.skip(info.project.name !== "mobile");
-  await page.goto("/about.html");
+  await page.goto("about.html");
   const toggle = page.locator("#nav-toggle");
   await toggle.focus();
   await page.keyboard.press("Enter");
@@ -109,7 +109,7 @@ test.describe("contact form", () => {
   test("empty submit shows inline errors, focuses the first, never reports success, sends nothing", async ({ page }) => {
     const sent = [];
     page.on("request", (r) => !["GET", "HEAD"].includes(r.method()) && sent.push(r.url()));
-    await page.goto("/contact.html");
+    await page.goto("contact.html");
     await page.click("#contact-form button[type=submit]");
     await expect(page.locator("#name")).toBeFocused();
     await expect(page.locator("#name")).toHaveAttribute("aria-invalid", "true");
@@ -120,7 +120,7 @@ test.describe("contact form", () => {
   });
 
   test("invalid email is rejected", async ({ page }) => {
-    await page.goto("/contact.html");
+    await page.goto("contact.html");
     await page.fill("#name", "Test");
     await page.fill("#email", "not-an-email");
     await page.selectOption("#sessionType", "Cars");
@@ -131,7 +131,7 @@ test.describe("contact form", () => {
   });
 
   test("date picker has a min and past dates are rejected", async ({ page }) => {
-    await page.goto("/contact.html");
+    await page.goto("contact.html");
     expect(await page.getAttribute("#preferredDate", "min")).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     await page.fill("#name", "Test");
     await page.fill("#email", "t@example.com");
@@ -147,7 +147,7 @@ test.describe("contact form", () => {
     const logs = [];
     page.on("request", (r) => !["GET", "HEAD"].includes(r.method()) && sent.push(r.url()));
     page.on("console", (m) => logs.push(m.text()));
-    await page.goto("/contact.html");
+    await page.goto("contact.html");
     await page.fill("#name", "Test Person");
     await page.fill("#email", "test@example.com");
     await page.selectOption("#sessionType", "Cars");
@@ -168,7 +168,7 @@ test.describe("contact form", () => {
   test("the unavailable notice is in static HTML and the form has no submit target (JS disabled)", async ({ browser }) => {
     const ctx = await browser.newContext({ javaScriptEnabled: false });
     const page = await ctx.newPage();
-    await page.goto("/contact.html");
+    await page.goto("contact.html");
     await expect(page.locator(".form-notice")).toBeVisible();
     expect((await page.locator(".form-notice").innerText()).toLowerCase()).toMatch(/not available|isn't available|not currently/);
     expect(await page.locator("#contact-form").getAttribute("action")).toBeNull();
@@ -182,7 +182,7 @@ test.describe("contact form", () => {
 test.describe("collections", () => {
   test("wheel is not hijacked: native scrolling moves the page", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop");
-    await page.goto("/collections.html");
+    await page.goto("collections.html");
     expect(await page.evaluate(() => getComputedStyle(document.body).overflow)).not.toBe("hidden");
     await page.mouse.move(600, 400);
     await page.mouse.wheel(0, 300);
@@ -192,7 +192,7 @@ test.describe("collections", () => {
 
   test("all links reachable; dots and PageDown/PageUp move between sections", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop");
-    await page.goto("/collections.html");
+    await page.goto("collections.html");
     const links = page.locator(".scroll-section a");
     await expect(links).toHaveCount(4);
     for (const i of [0, 1, 2, 3]) {
@@ -211,7 +211,7 @@ test.describe("collections", () => {
 
   test("a focused collection link has a visible focus indicator", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop");
-    await page.goto("/collections.html");
+    await page.goto("collections.html");
     await page.keyboard.press("Tab"); // skip link
     await page.locator(".scroll-section a").first().focus();
     const outline = await page.locator(".scroll-section a").first().evaluate((e) => getComputedStyle(e).outlineStyle);
@@ -220,7 +220,7 @@ test.describe("collections", () => {
 
   test("mobile: sections stack and scroll normally; dot-nav hidden", async ({ page }, info) => {
     test.skip(info.project.name !== "mobile");
-    await page.goto("/collections.html");
+    await page.goto("collections.html");
     await expect(page.locator(".scroll-dots")).toBeHidden();
     const tops = await page.locator(".scroll-section").evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top + window.scrollY)));
     expect(tops[1]).toBeGreaterThan(tops[0]);
@@ -231,14 +231,14 @@ test.describe("collections", () => {
 /* ---------- gallery + lightbox ---------- */
 test.describe("gallery & lightbox", () => {
   test("category jump nav links to existing category blocks", async ({ page }) => {
-    await page.goto("/gallery.html");
+    await page.goto("gallery.html");
     const hrefs = await page.locator(".gallery-jump a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
     expect(hrefs).toEqual(["#graduations", "#proposals", "#cars", "#portraits"]);
     for (const h of hrefs) await expect(page.locator(h)).toHaveCount(1);
   });
 
   test("keyboard: open, arrow-navigate within category (wraps), Tab stays inside, Escape restores focus", async ({ page }) => {
-    await page.goto("/gallery.html#cars");
+    await page.goto("gallery.html#cars");
     const items = page.locator("#cars .photo-item");
     expect(await items.count()).toBeGreaterThan(2);
     await items.first().focus();
@@ -269,7 +269,7 @@ test.describe("gallery & lightbox", () => {
   });
 
   test("close button and backdrop click close it", async ({ page }) => {
-    await page.goto("/gallery.html#proposals");
+    await page.goto("gallery.html#proposals");
     await page.locator("#proposals .photo-item").first().click();
     await page.locator(".lightbox-close").click();
     await expect(page.locator("#lightbox")).not.toHaveClass(/active/);
@@ -280,7 +280,7 @@ test.describe("gallery & lightbox", () => {
 
   test("mobile: controls are 44px and swipe changes photo", async ({ page }, info) => {
     test.skip(info.project.name !== "mobile");
-    await page.goto("/gallery.html#cars");
+    await page.goto("gallery.html#cars");
     await page.locator("#cars .photo-item").first().tap();
     const img = page.locator("#lightbox-img");
     const src0 = await img.getAttribute("src");

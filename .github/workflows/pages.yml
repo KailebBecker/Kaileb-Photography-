@@ -1,0 +1,79 @@
+# Temporary STAGING deployment to GitHub Pages (frontend only).
+# This is NOT production hosting and does not decide architecture gate G1.
+# The repository stays the single source; the published artifact is assembled
+# fresh on every run and contains only the runtime website files.
+name: Deploy staging to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Fail the deploy if generated images / <picture> markup are stale.
+      # (Does not need originals/, which is gitignored and never in CI.)
+      - name: Check image derivatives are current
+        run: npm run images:check
+
+      - name: Assemble staging artifact (runtime files only)
+        run: |
+          mkdir _site
+          cp *.html _site/
+          cp -r styles _site/styles
+          mkdir _site/scripts && cp scripts/main.js _site/scripts/
+          # Only generated web derivatives + placeholders/social card; no manifest, no sources.
+          mkdir _site/images && cp -r images/. _site/images/ && rm -f _site/images/manifest.json
+          touch _site/.nojekyll
+
+          # Staging-only crawler hints. The committed production HTML is untouched.
+          # (noindex/robots are polite requests to crawlers, NOT access control.)
+          for f in _site/*.html; do
+            sed -i 's#<meta charset="UTF-8">#<meta charset="UTF-8">\n  <meta name="robots" content="noindex, nofollow">#' "$f"
+            sed -i '/<link rel="canonical"/d' "$f"
+          done
+          printf 'User-agent: *\nDisallow: /\n' > _site/robots.txt
+
+          echo "Artifact contents:"; find _site -type f | sed 's#/[^/]*$##' | sort | uniq -c
+
+      - name: Sanity-check the artifact
+        run: |
+          test -f _site/index.html
+          test -f _site/scripts/main.js
+          test -z "$(ls _site/images | grep -E '^manifest' || true)"
+          test ! -e _site/source && test ! -e _site/originals && test ! -e _site/docs && test ! -e _site/tests
+          grep -q 'noindex' _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -78,7 +78,7 @@ test.describe("image files (static checks)", () => {
 const widthOf = (url) => Number((/-(\d+)\.(?:avif|jpg)/.exec(url) || [])[1]);
 
 test("hero is a real high-priority <img>, not a CSS background", async ({ page }) => {
-  await page.goto("/index.html");
+  await page.goto("index.html");
   const hero = page.locator("img.hero-photo");
   await expect(hero).toHaveAttribute("fetchpriority", "high");
   await expect(hero).toHaveAttribute("loading", "eager");
@@ -91,7 +91,7 @@ test("hero is a real high-priority <img>, not a CSS background", async ({ page }
 });
 
 test("gallery grid photos are not layout-shifting and use responsive sources", async ({ page }) => {
-  await page.goto("/gallery.html");
+  await page.goto("gallery.html");
   const info = await page.locator(".photo-item picture img").evaluateAll((imgs) =>
     imgs.map((i) => ({ w: i.getAttribute("width"), h: i.getAttribute("height"), lazy: i.loading, srcset: !!i.closest("picture").querySelector("source[srcset]") }))
   );
@@ -108,7 +108,7 @@ test("mobile visitors download a small, right-sized gallery", async ({ page }, i
   test.skip(info.project.name !== "mobile");
   const loaded = [];
   page.on("response", (r) => /images\/.*\.(avif|jpg)/.test(r.url()) && loaded.push({ url: r.url(), bytes: Number(r.headers()["content-length"] || 0) }));
-  await page.goto("/gallery.html");
+  await page.goto("gallery.html");
   const h = await page.evaluate(() => document.documentElement.scrollHeight);
   for (let y = 0; y < h; y += 500) {
     await page.evaluate((y) => window.scrollTo(0, y), y);
@@ -123,7 +123,7 @@ test("mobile visitors download a small, right-sized gallery", async ({ page }, i
 });
 
 test("lightbox loads a larger derivative than the grid, but not the largest on phones", async ({ page }, info) => {
-  await page.goto("/gallery.html#cars");
+  await page.goto("gallery.html#cars");
   const first = page.locator("#cars .photo-item").first();
   await first.scrollIntoViewIfNeeded();
   await expect.poll(() => first.locator("img").evaluate((i) => i.complete && i.currentSrc !== "")).toBe(true);
@@ -148,7 +148,7 @@ test("lightbox loads a larger derivative than the grid, but not the largest on p
 });
 
 test("lightbox still works for the non-picture portrait placeholders", async ({ page }) => {
-  await page.goto("/gallery.html#portraits");
+  await page.goto("gallery.html#portraits");
   await page.locator("#portraits .photo-item").first().click();
   const lb = page.locator("#lightbox-img");
   await expect(lb).toHaveAttribute("src", /portraits\/portrait-0\d\.svg/);
@@ -156,7 +156,7 @@ test("lightbox still works for the non-picture portrait placeholders", async ({ 
 });
 
 test("collections photos are real images that fill their sections", async ({ page }) => {
-  await page.goto("/collections.html");
+  await page.goto("collections.html");
   const imgs = page.locator(".scroll-section .scroll-photo");
   await expect(imgs).toHaveCount(4);
   const first = imgs.first();
