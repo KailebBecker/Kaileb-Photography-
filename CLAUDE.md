@@ -111,7 +111,11 @@ the original sage-green.
   counter is shown. Focus is trapped in the dialog and returned to the photo
   on close.
 - A category jump-nav (`.gallery-jump`) sits above the grids.
-- Lazy-loaded images (`loading="lazy"`).
+- Photos are authored as `<picture data-photo="cat/Name" data-preset="grid"><img alt="..."></picture>`;
+  `npm run images` generates hashed AVIF/JPEG derivatives from `source/` (or
+  gitignored `originals/`) and expands the markup (srcset, sizes, width/height,
+  lazy loading). Never edit generated files in `images/` by hand; see
+  docs/STATE.md "Image workflow". Never commit full-resolution originals.
 - Graduations, Proposals, and Cars have real photos. Portraits has no real
   shoot yet and uses the off-white placeholder graphics in
   `images/portraits/` — swap in real photos once a portrait session

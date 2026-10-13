@@ -77,7 +77,7 @@ User: picks a date; sees "Looks available" / "Not available — pick another dat
 Owner "new request", client "received", client "accepted/declined/cancelled" (owner-written text in a template). Sent from the business domain with SPF/DKIM/DMARC (domain gate). **Acceptance:** emails land in Gmail/iCloud inbox (not spam) in a test; failures are retried or logged and visible in admin; no PII in logs.
 
 ### F5 Image delivery — V1
-Originals preserved privately; site serves generated AVIF/WebP/JPEG derivatives with `srcset`/`sizes`, intrinsic `width`/`height`, lazy-loading below the fold, preloaded hero as an `<img>` (or preload) with `fetchpriority="high"`. Lightbox loads a larger derivative (~2000 px long edge), prev/next + swipe + keyboard arrows.
+Originals preserved privately; site serves generated AVIF derivatives plus one JPEG fallback (WebP intentionally omitted — see ARCHITECTURE.md §2) with `srcset`/`sizes`, intrinsic `width`/`height`, lazy-loading below the fold, preloaded hero as an `<img>` (or preload) with `fetchpriority="high"`. Lightbox loads a larger derivative (~2000 px long edge), prev/next + swipe + keyboard arrows.
 **Acceptance:** Lighthouse mobile (throttled) on home and gallery: LCP ≤ 2.5 s, CLS ≤ 0.1, performance ≥ 90 on production host; no gallery image over 300 KB at its largest delivered size except the lightbox derivative (≤ 600 KB); original files are not publicly reachable; a documented script regenerates derivatives from originals.
 
 ### F6 Site polish / mobile / accessibility — V1

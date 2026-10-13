@@ -1,7 +1,7 @@
 # Project State & Autonomous Workflow
 
 **Update this file at the end of every session. It is the only place that tracks progress.**
-Last updated: 2026-10-12 · Phase: **M1 complete. Hosting/backend (G1) still UNAPPROVED. Next: M2 (image pipeline) — or M3/G1 decision**
+Last updated: 2026-10-12 · Phase: **M1 complete; M2 partially complete (blocked on true originals, G6). Hosting/backend (G1) still UNAPPROVED. Critical path: owner decision G1 (M3)**
 
 ## Doc map (each fact lives in exactly one place)
 | File | Controls |
@@ -36,7 +36,7 @@ Last updated: 2026-10-12 · Phase: **M1 complete. Hosting/backend (G1) still UNA
 Lead time 7 days (live now as `MIN_LEAD_DAYS` in scripts/main.js — date picker min + validation) · weekday windows after 5:30 pm, weekends all day · buffer 60 min · retention per V1-SPEC F9.
 
 ## Milestone status
-M1 ☑ · M2 ☐ · M3 ☐(gate) · M4 ☐ · M5 ☐ · M6 ☐ · M7 ☐ · M8 ☐ · M9 ☐(gate)
+M1 ☑ · M2 ◐ (infrastructure done; originals needed) · M3 ☐(gate) · M4 ☐ · M5 ☐ · M6 ☐ · M7 ☐ · M8 ☐ · M9 ☐(gate)
 
 ## "Continue Photography Website V1" — session procedure
 Principle: **STATE → ROADMAP → RELEVANT DOCS → CODEBASE MAP → RELEVANT SOURCE → IMPLEMENT.** Never read the whole repo; the source stays authoritative, the map is only an index.
@@ -52,17 +52,44 @@ Principle: **STATE → ROADMAP → RELEVANT DOCS → CODEBASE MAP → RELEVANT S
 10. Commit (small, descriptive). Then continue to the next safe milestone, or stop with a summary.
 Never: deploy, touch DNS, provision services or create production credentials, connect a real calendar, buy services, or implement payments without the matching gate answered here. Never commit secrets or real client data. Subagents only for bounded parallel research/review; one orchestrator owns the plan.
 
+## M2 outcome and G6 (true originals) — PARTIALLY COMPLETE
+**Done:** build script + manifest + hashed AVIF/JPEG derivatives (never upscaled, metadata stripped); `<picture>`/srcset/sizes/dimensions for gallery and teasers; hero is now a real `<img fetchpriority=high>` (was a CSS background); collections backgrounds are lazy `<img>` (were CSS backgrounds); lightbox loads larger derivatives sized to the dialog; originals/ vs source/ separation; tests + measurement script.
+**Measured (local static server, image bytes per page, before -> after):**
+| Page / device | Before | After |
+|---|---|---|
+| Home, phone 390px@3x | 1451 KB | 464 KB |
+| Home, desktop @1x | 1451 KB | 258 KB |
+| Gallery, phone full scroll | 5772 KB | 3310 KB |
+| Gallery, desktop @1x full scroll | 5772 KB | 757 KB |
+| Gallery, desktop @2x full scroll | 5772 KB | 2080 KB |
+| Collections, phone | 428 KB | 311 KB |
+Lighthouse was not run (spec requires throttled Lighthouse on the production host, M9). Phones in the 1-column gallery still need ~1000 px-wide photos at 3x DPR, so that number only drops further with a lower-quality setting, which was deliberately not done.
+**Quality:** AVIF q60 vs the source JPEG compared at 100% on a face crop: no visible difference. Photos are never upscaled, so no fake resolution. The committed sources are *already heavily compressed* (e.g. 2000x3000 at ~160 KB), so any further processing can only preserve, not restore, quality.
+**Why PARTIAL:** the sources are not true originals. Concretely, the collections page shows portrait photos full-bleed (`graduations/ButcherJones8` 1088 px wide, `proposals/Proposal1` 1200 px wide) which the browser upscales on a 1440 px+ screen, and the home hero (2400 px) is the largest step available for retina desktops. These cannot be fixed without originals.
+**What the owner needs to provide (G6):** the full-resolution exports (not RAW required; JPEG/TIFF/PNG, ideally >= 3000 px on the long edge, sRGB or Adobe RGB, finished edits) of every published photo, at least the ~10 used as collection/hero images first (`graduations/ButcherJones8`, `proposals/Proposal1`, `proposals/Proposal8` (hero), `cars/Car3`), then the rest. Put them in `originals/<category>/<Name>.<ext>` using the *same category folder and base filename as the existing `source/` file* (e.g. `originals/graduations/ASU2.tif`); the folder is gitignored and never committed. Simplest handoff: zip the files, tell Claude the path, and Claude will place them and run `npm run images` (new hashed derivatives replace the old ones automatically). Keep RAW/Lightroom catalog archived separately and privately; Claude never needs RAW. Total storage guidance: keep originals backed up outside the repo (cloud drive or external disk).
+
+## GitHub Pages test site (owner note, 2026-10-13)
+The owner will use a `github.io` site as a **test** website. This is not the G1 production decision. Constraints to remember when it is set up: it serves the whole repo (so nothing private may ever be committed, including originals); project sites live under `/<repo>/` so all site paths must stay relative (they are); no custom cache headers (hashed image filenames mitigate this); canonical/OG URLs/sitemap still point at `www.kailebbeckerphotography.com`, so the test site should be `noindex` and not submitted to search engines; no backend, so the contact form stays in its truthful no-backend state. Claude does not configure or deploy it without an explicit instruction.
+
+## Owner decision still required before production launch
+The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scripts/main.js`) is a **placeholder**, not an approved business rule. It must be decided (G8) before production launch; no other placeholder policy is customer-facing.
+
 ## Known deferred visual/UX items (from M1 review; not blocking)
 - Home hero: green "Becker" wordmark and desktop nav text over bright sky/grass photo regions have low contrast — axe can't measure text over photos; needs eyes + a palette decision (G5).
 - Collections header glass gradient has a reddish cast over photos; collections scrim lightened modestly only.
-- Gallery images still lack `width`/`height` and `srcset` (M2). Lightbox still shows the same file as the grid (M2 adds a larger derivative).
+- (Resolved in M2) gallery dimensions/srcset and lightbox derivative sizing.
 - Fonts are third-party render-blocking Google Fonts (not in V1 scope unless Lighthouse says otherwise in M9).
 - Sage accent remains CLAUDE.md-contradicting (G5).
 
 ## Test commands
-`npm install && npx playwright install chromium` (once), then `npm test` (62 tests: desktop + mobile; 55 run, 7 are project-specific skips). Keep green before every commit.
+`npm install && npx playwright install chromium` (once), then `npm test` (desktop + mobile; some tests are project-specific skips; 71 pass after M2). Keep green before every commit.
+
+## Image workflow (M2)
+- Add/replace a photo: put the file in `source/<category>/<Name>.jpg` (or the full-res original in gitignored `originals/<category>/<Name>.<ext>`), add `<picture data-photo="<category>/<Name>" data-preset="grid"><img alt="descriptive alt"></picture>` to the page, then `npm run images` (generates AVIF+JPEG derivatives, `images/manifest.json`, and expands the markup; ~2 min for a full rebuild, incremental after). `npm run images:check` verifies freshness (also run by tests). `npm run measure` (with `npm run serve` running) reports image bytes per page/device.
+- Never edit generated files in `images/`; commit them with the source change.
 
 ## Session log
 - 2026-10-12: Audit, spec, architecture, roadmap written (no application code changed).
 - 2026-10-12: Direction approved (G0). Added `CODEBASE-MAP.md`; progressive context-loading procedure; calendar-failure wording changed to fail-safe/deferred-to-M10; Architecture marked unapproved until G1.
 - 2026-10-12: M1 front-end hardening done. Truthful interim contact form; native-scroll collections; reveal/typewriter progressive enhancement; 44px touch targets; focus-visible; lightbox prev/next/swipe/trap; gallery jump-nav; AA contrast shades; Playwright+axe suite (55 passing). No backend/hosting/booking/availability/payments work.
+- 2026-10-13: M2 image pipeline built (AVIF + JPEG fallback, hashed, manifest-driven `<picture>` markup, hero/collections as real images, lightbox sizing). Marked PARTIAL pending true originals (G6). 71 tests pass.

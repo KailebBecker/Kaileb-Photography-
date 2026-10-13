@@ -49,7 +49,7 @@ Objective: fix everything fixable without a backend. Scope: client-side validati
 Accept: AC-F1.1, F6 criteria; axe 0 serious/critical on 6 pages at 390 & 1440; Playwright smoke suite green; no regressions in CLAUDE.md-described behavior (update CLAUDE.md where changed).
 Prereqs: G0. Validation: Playwright at 390/768/1440, keyboard-only pass.
 
-### M2 — Image pipeline 🟡 (final run waits on G6)
+### M2 — Image pipeline 🟡 — **PARTIALLY COMPLETE** (infrastructure done 2026-10-13; true originals still needed, G6)
 Objective: F5. Scope: `scripts/build-images` (sharp), manifest, `<picture>`/srcset markup generated from manifest, hero as `<img>`, hashed filenames, lightbox large derivative, `width/height`. Works from current JPEGs now; re-run on true originals later.
 Accept: F5 acceptance (Lighthouse on local static server as proxy; re-measure in prod M9). Prereqs: M1 (tests).
 
