@@ -1,0 +1,22 @@
+{
+  "name": "kaileb-inquiry-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Small inquiry API for Kaileb Becker Photography (Fastify + SQLite). Runs on the existing AWS server behind an HTTPS reverse proxy.",
+  "engines": {
+    "node": ">=20"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js",
+    "inquiries": "node src/cli.js list",
+    "backup": "node src/backup.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@fastify/rate-limit": "^11.2.1",
+    "better-sqlite3": "^13.0.3",
+    "fastify": "^5.12.7"
+  }
+}

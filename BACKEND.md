@@ -1,3 +1,5 @@
+> **2026-10-14:** superseded in part by `server/README.md` and `docs/STATE.md` ("Inquiry slice"): inquiries are stored in the project's own SQLite DB on the AWS server and emailed to the owner. The Wise Agent forward below is deferred (V1.1) and not implemented.
+
 # Backend / Deployment — Come back to this later
 
 Not needed to build the site (see CLAUDE.md). Fill in once known.

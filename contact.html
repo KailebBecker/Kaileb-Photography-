@@ -138,11 +138,26 @@
             <p class="field-error" id="message-error" hidden></p>
           </div>
 
-          <!-- Ships disabled: without JS there is no endpoint to submit to. M5 restores the "Send Inquiry" label. -->
+          <!-- Honeypot: hidden from people and assistive tech; bots that fill it are silently discarded server-side. -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <div id="turnstile-widget"></div>
+
+          <!-- Ships disabled: without JS there is no endpoint to submit to. JS enables it and relabels it "Send Inquiry" when an inquiry API is configured. -->
           <button type="submit" class="btn btn-primary" disabled>Check my details <span class="arrow">→</span></button>
 
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
         </form>
+
+        <section class="inquiry-success" id="inquiry-success" aria-labelledby="inquiry-success-title" hidden>
+          <h2 id="inquiry-success-title">Thank you, your inquiry was received</h2>
+          <p>Reference <strong data-ref></strong>. This is a request, not a booking yet. I'll review your details and date, then reply to <strong data-email></strong>.</p>
+          <p>If you don't hear back, email <a href="mailto:kaibecker13@gmail.com">kaibecker13@gmail.com</a> or call <a href="tel:+14804048969">(480) 404-8969</a>.</p>
+          <button type="button" class="btn btn-outline" data-again>Send another inquiry</button>
+        </section>
       </div>
     </section>
   </main>
@@ -182,6 +197,7 @@
     </div>
   </footer>
 
-  <script src="scripts/main.js?v=6"></script>
+  <script src="scripts/site-config.js?v=1"></script>
+  <script src="scripts/main.js?v=7"></script>
 </body>
 </html>

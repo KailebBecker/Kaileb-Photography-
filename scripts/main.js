@@ -356,18 +356,22 @@ function initPhotoLightbox() {
 }
 
 /* ---------- Contact form (contact.html) ---------- */
-/* TEMPORARY (until M5): there is no inquiry backend. The form validates, but a
-   valid attempt NEVER reports success — it tells the visitor online submission
-   isn't available and points them to the real email/phone already published on
-   the page. Nothing is sent, stored or logged.
+/* Two modes, chosen by window.SITE_CONFIG.inquiryApiUrl (scripts/site-config.js,
+   injected per environment — never hard-coded to one host):
 
-   M5 REPLACEMENT POINT: set INQUIRY_BACKEND_ENABLED = true and implement
-   submitInquiry() with a fetch() POST to the real endpoint (see
-   docs/V1-SPEC.md F1). Success may only be shown after the server confirms the
-   request was stored; add error / rate-limited states at the same time. */
-const INQUIRY_BACKEND_ENABLED = false;
+   - NOT configured (no backend reachable): the M1 behaviour. Validate, then say
+     plainly that online submission is not available, send/log/store nothing, and
+     point to the published email/phone.
+   - Configured: validate, POST JSON to the inquiry API, and show success ONLY when the
+     server answers that it durably stored the inquiry (HTTP 200/201 with ok:true).
+     Anything else (network error, timeout, 5xx, bad response) is reported as "not
+     confirmed as received" with the input preserved, the email/phone fallback shown,
+     and a safe retry: the same idempotency key is reused while the content is
+     unchanged, so a retry can never create a duplicate inquiry.
+   Client validation is a convenience; the server re-validates everything. */
 // OWNER-DECISION (docs/STATE.md, G8): placeholder minimum notice for a requested date.
 const MIN_LEAD_DAYS = 7;
+const REQUEST_TIMEOUT_MS = 15000;
 
 const FORM_FIELDS = ["name", "email", "sessionType", "preferredDate", "message"];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -382,18 +386,45 @@ function addDays(isoDate, days) {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
+function newRequestKey() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function initContactForm() {
   const form = document.getElementById("contact-form");
   const status = document.getElementById("form-status");
   if (!form || !status) return;
 
+  const config = window.SITE_CONFIG || {};
+  const configuredUrl = typeof config.inquiryApiUrl === "string" ? config.inquiryApiUrl.trim() : "";
+  // Only ever talk to an https API (plain http is allowed solely for local development).
+  const apiUrl = /^https:\/\//i.test(configuredUrl) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(configuredUrl) ? configuredUrl : "";
+  const live = apiUrl !== "";
+  const notice = document.getElementById("form-notice");
+  const success = document.getElementById("inquiry-success");
   const submitBtn = form.querySelector("button[type=submit]");
   const dateInput = form.elements.preferredDate;
   const minDate = addDays(arizonaToday(), MIN_LEAD_DAYS);
   if (dateInput) dateInput.min = minDate;
 
-  // The submit button ships disabled in the HTML so the form can't submit at
-  // all without JS (there is no endpoint); enabled here once validation exists.
+  function setSubmitLabel(text) {
+    if (!submitBtn) return;
+    submitBtn.textContent = `${text} `;
+    const arrow = document.createElement("span");
+    arrow.className = "arrow";
+    arrow.textContent = "→";
+    submitBtn.append(arrow);
+  }
+
+  if (live) {
+    // The static "not available yet" notice only applies when there is no backend.
+    if (notice) notice.hidden = true;
+    setSubmitLabel("Send Inquiry");
+  }
+  // The submit button ships disabled in the HTML so the form can't submit at all
+  // without JS; enabled here once validation exists.
   if (submitBtn) submitBtn.disabled = false;
 
   function errorFor(name) {
@@ -431,28 +462,28 @@ function initContactForm() {
 
   function clearStatus() {
     status.textContent = "";
-    status.classList.remove("is-unavailable");
+    status.className = "form-status";
+    status.removeAttribute("tabindex");
   }
 
-  function showUnavailable() {
+  /** Message + the real email/phone, focused so screen readers announce it. */
+  function showStatus(kind, lead, tail) {
     status.textContent = "";
-    status.classList.add("is-unavailable");
-    status.append("Online submission is not available yet, so nothing was sent. Your details are still in the form. Please email ");
+    status.className = `form-status is-${kind}`;
+    status.append(lead);
     const mail = document.createElement("a");
     mail.href = "mailto:kaibecker13@gmail.com";
     mail.textContent = "kaibecker13@gmail.com";
     const tel = document.createElement("a");
     tel.href = "tel:+14804048969";
     tel.textContent = "(480) 404-8969";
-    status.append(mail, " or call ", tel, " to request your session.");
+    status.append(mail, " or call ", tel, tail);
     status.setAttribute("tabindex", "-1");
     status.focus();
   }
 
-  // M5: replace with a real fetch() POST; resolve only after the server confirms storage.
-  function submitInquiry() {
-    showUnavailable();
-  }
+  const showUnavailable = () =>
+    showStatus("unavailable", "Online submission is not available yet, so nothing was sent. Your details are still in the form. Please email ", " to request your session.");
 
   FORM_FIELDS.forEach((name) => {
     const field = form.elements[name];
@@ -462,8 +493,148 @@ function initContactForm() {
     field.addEventListener("change", clear);
   });
 
+  /* ----- optional bot check (Cloudflare Turnstile; works on any host) ----- */
+  let turnstileToken = "";
+  let turnstileWidget = null;
+  const widgetEl = document.getElementById("turnstile-widget");
+  if (live && config.turnstileSiteKey && widgetEl) {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.onload = () => {
+      turnstileWidget = window.turnstile.render(widgetEl, {
+        sitekey: config.turnstileSiteKey,
+        callback: (token) => (turnstileToken = token),
+        "expired-callback": () => (turnstileToken = ""),
+        "error-callback": () => (turnstileToken = ""),
+      });
+    };
+    document.head.append(script);
+  }
+  function resetBotCheck() {
+    turnstileToken = "";
+    if (turnstileWidget !== null && window.turnstile) window.turnstile.reset(turnstileWidget);
+  }
+
+  /* ----- submission ----- */
+  let busy = false;
+  let attempt = { signature: null, key: null };
+
+  function collect() {
+    const v = (name) => (form.elements[name] ? form.elements[name].value.trim() : "");
+    return {
+      name: v("name"),
+      email: v("email"),
+      phone: v("phone"),
+      sessionType: v("sessionType"),
+      preferredDate: v("preferredDate"),
+      location: v("location"),
+      message: v("message"),
+      discountCode: v("discountCode"),
+      website: form.elements.website ? form.elements.website.value : "", // honeypot: humans leave it empty
+    };
+  }
+
+  function setBusy(on) {
+    busy = on;
+    if (submitBtn) submitBtn.disabled = on;
+    form.setAttribute("aria-busy", String(on));
+    if (live) setSubmitLabel(on ? "Sending…" : "Send Inquiry");
+  }
+
+  function showSuccess(id, email) {
+    form.reset();
+    FORM_FIELDS.forEach((name) => setError(name, ""));
+    clearStatus();
+    if (!success) {
+      showStatus("success", "Your inquiry was received. I'll follow up by email. If you don't hear back, reach me at ", ".");
+      return;
+    }
+    success.querySelector("[data-ref]").textContent = id;
+    success.querySelector("[data-email]").textContent = email;
+    form.hidden = true;
+    success.hidden = false;
+    success.setAttribute("tabindex", "-1");
+    success.focus();
+  }
+
+  async function submitInquiry() {
+    const data = collect();
+    // Same content => same key, so retrying after a lost response can't duplicate the inquiry.
+    const signature = JSON.stringify(data);
+    if (attempt.signature !== signature) attempt = { signature, key: newRequestKey() };
+    const body = { ...data, idempotencyKey: attempt.key };
+    if (config.turnstileSiteKey) {
+      if (!turnstileToken) {
+        showStatus("error", "Please complete the verification above, then send again. Or email ", " instead.");
+        return;
+      }
+      body.turnstileToken = turnstileToken;
+    }
+
+    setBusy(true);
+    clearStatus();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      let json = null;
+      try {
+        json = await res.json();
+      } catch (e) {
+        json = null;
+      }
+
+      if ((res.status === 201 || res.status === 200) && json && json.ok === true && typeof json.id === "string") {
+        attempt = { signature: null, key: null };
+        showSuccess(json.id, data.email);
+        return;
+      }
+      if (res.status === 400 && json && json.error === "validation" && json.fields) {
+        const unmapped = [];
+        Object.keys(json.fields).forEach((name) => (FORM_FIELDS.includes(name) ? setError(name, String(json.fields[name])) : unmapped.push(name)));
+        const first = FORM_FIELDS.find((name) => json.fields[name]);
+        if (first) form.elements[first].focus();
+        else showStatus("error", "Some details couldn't be accepted. Nothing was sent. Please check the form, or email ", " instead.");
+        return;
+      }
+      if (res.status === 429) {
+        showStatus("error", "Too many attempts right now, and your inquiry was not sent. Please try again in a few minutes, or email ", " instead.");
+        return;
+      }
+      if (res.status === 400 && json && json.error === "bot_check_failed") {
+        showStatus("error", "The verification didn't pass, so nothing was sent. Please try again, or email ", " instead.");
+        return;
+      }
+      throw new Error("not confirmed");
+    } catch (err) {
+      showStatus("error", "We couldn't confirm that your inquiry was received, so please don't assume it went through. Your details are still in the form. Press Send Inquiry to try again, or email ", " instead.");
+    } finally {
+      clearTimeout(timer);
+      resetBotCheck();
+      setBusy(false);
+    }
+  }
+
+  if (success) {
+    const again = success.querySelector("[data-again]");
+    if (again) {
+      again.addEventListener("click", () => {
+        success.hidden = true;
+        form.hidden = false;
+        form.elements.name.focus();
+      });
+    }
+  }
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (busy) return; // ignore double taps while a request is in flight
     clearStatus();
 
     const errors = validate();
@@ -474,7 +645,7 @@ function initContactForm() {
       return;
     }
 
-    if (!INQUIRY_BACKEND_ENABLED) {
+    if (!live) {
       showUnavailable();
       return;
     }
@@ -482,7 +653,6 @@ function initContactForm() {
   });
 }
 
-/* ---------- Boot (kept last so all module-level constants are initialised) ---------- */
 // One init failing must not take the others down (e.g. the contact form
 // still enables if the lightbox code throws).
 [

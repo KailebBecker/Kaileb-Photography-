@@ -1700,6 +1700,69 @@ select:focus-visible,
   color: var(--color-text);
 }
 
+/* Honeypot: off-screen (not display:none, which some bots detect), never focusable by people. */
+.hp-field {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+#turnstile-widget:empty {
+  display: none;
+}
+
+.contact-form[hidden],
+.inquiry-success[hidden] {
+  display: none;
+}
+
+.form-status.is-error {
+  display: block;
+  background: rgba(155, 44, 28, 0.08);
+  border: 1px solid #9b2c1c;
+  color: var(--color-text);
+}
+
+.form-status.is-success {
+  display: block;
+  background: rgba(var(--color-accent-rgb), 0.16);
+  border: 1px solid var(--color-accent-dark);
+  color: var(--color-text);
+}
+
+.form-status a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Shown only after the server confirms the inquiry was stored. */
+.inquiry-success {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-accent-dark);
+  border-radius: var(--radius-card);
+}
+
+.inquiry-success h2 {
+  font-size: 1.5rem;
+}
+
+.inquiry-success a {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inquiry-success .btn {
+  justify-self: start;
+}
+
 /* ---------- Footer ---------- */
 .site-footer {
   border-top: 1px solid var(--color-border);

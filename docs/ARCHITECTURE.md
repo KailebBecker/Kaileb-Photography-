@@ -2,6 +2,8 @@
 
 **Status: hosting/backend selection is UNAPPROVED until owner gate G1 (Cloudflare is the current recommendation only; nothing is provisioned).** CLAUDE.md says not to assume a host until decided. Product direction (V1-SPEC, ROADMAP) was approved 2026-10-12. Facts about prices/limits marked **[verify]** come from memory or third-party sources and must be re-checked against provider docs before commitment.
 
+> **Update 2026-10-14:** the owner directed that the inquiry backend run on their existing **AWS server** (Node/Fastify + SQLite behind HTTPS, see `server/README.md`). That overrides the Cloudflare recommendation below for the API/database/email path; Cloudflare Access/Workers/D1 are no longer the plan for it. Security controls in §4 still apply (admin auth will need a mature mechanism on AWS, e.g. SSO/OIDC or a reverse-proxy auth layer, decided at M6). Static hosting for production remains undecided (GitHub Pages is staging only).
+
 ## 1. Architecture options
 
 Requirements: one-person business, ~tens of requests/month, low cost, real storage, auth for one admin, email, strong image delivery, calendar integration optional, minimal maintenance, **keep the existing static HTML site** (no framework migration).

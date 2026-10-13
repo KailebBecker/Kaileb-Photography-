@@ -1,7 +1,7 @@
 # Project State & Autonomous Workflow
 
 **Update this file at the end of every session. It is the only place that tracks progress.**
-Last updated: 2026-10-12 · Phase: **M1 complete; M2 partially complete (blocked on true originals, G6). Hosting/backend (G1) still UNAPPROVED. Critical path: owner decision G1 (M3)**
+Last updated: 2026-10-14 · Phase: **Inquiry vertical slice built and tested locally; deployment waits on AWS access + HTTPS hostname + email key (owner gates below). M2 partial (originals, G6).**
 
 ## Doc map (each fact lives in exactly one place)
 | File | Controls |
@@ -16,11 +16,15 @@ Last updated: 2026-10-12 · Phase: **M1 complete; M2 partially complete (blocked
 | `BACKEND.md` | Legacy notes (Wise Agent, AWS box). Superseded by ARCHITECTURE.md once G1/G3 decided |
 
 ## Next milestone
-**M2 — Image pipeline** (🟡 autonomous; final run waits on G6 originals) is the next unblocked item. **M3/G1 (host decision) is the critical path:** M4 (backend) and everything after cannot start until the owner decides. Do not begin M4 before G1.
+**Get the inquiry form live on staging** (owner gates in "Inquiry slice" below), then **M6-lite: owner view of requests + accept/decline/confirm lifecycle** (the CLI is only a stopgap). Availability, calendar, payments, Wise Agent remain later.
 
 ## Decisions log
 | Date | Decision | Status |
 |---|---|---|
+| 2026-10-14 | **Backend runs on the owner's existing AWS server** (Node + Fastify + SQLite behind an HTTPS reverse proxy). Supersedes the Cloudflare recommendation for the inquiry slice; the AWS box details (OS, access, web server, hostname) are still unknown | Owner-directed (G1 for the inquiry API effectively answered; rest of architecture unchanged) |
+| 2026-10-14 | Inquiry + request are one entity (V1-SPEC); table `inquiries` already carries the NEW→CONFIRMED status enum so M6 builds on it | Done |
+| 2026-10-14 | Email via Resend HTTP API (plain text). Client confirmation email is NOT part of this slice (needs a verified sending domain / DNS) | Done / follow-up |
+| 2026-10-14 | Server rejects only *past* dates; the 7-day lead time stays a client-side placeholder (G8), not enforced by the API | Done |
 | 2026-10-12 | Product direction (V1-SPEC, ROADMAP) approved by owner. Request-and-approve booking, no instant booking, no on-site payments in V1 | **Approved (G0)** |
 | 2026-10-12 | Manual availability first-class; external calendar is V1.1 and optional. External-calendar failure must fail safely (never silently show a date available when a required source can't be verified); exact policy decided in M10 | Approved direction |
 | 2026-10-12 | Recommended architecture: Cloudflare Pages + Workers + D1 + R2, Access for admin — recommendation only, nothing provisioned | **Unapproved until G1** |
@@ -36,7 +40,7 @@ Last updated: 2026-10-12 · Phase: **M1 complete; M2 partially complete (blocked
 Lead time 7 days (live now as `MIN_LEAD_DAYS` in scripts/main.js — date picker min + validation) · weekday windows after 5:30 pm, weekends all day · buffer 60 min · retention per V1-SPEC F9.
 
 ## Milestone status
-M1 ☑ · M2 ◐ (infrastructure done; originals needed) · M3 ☐(gate) · M4 ☐ · M5 ☐ · M6 ☐ · M7 ☐ · M8 ☐ · M9 ☐(gate)
+M1 ☑ · M2 ◐ (infrastructure done; originals needed) · M3 ☐(gate; inquiry API host = AWS per owner) · **M4+M5 inquiry slice ◐ (built + tested locally; not deployed)** · M6 ☐ · M7 ☐ · M8 ☐ · M9 ☐(gate)
 
 ## "Continue Photography Website V1" — session procedure
 Principle: **STATE → ROADMAP → RELEVANT DOCS → CODEBASE MAP → RELEVANT SOURCE → IMPLEMENT.** Never read the whole repo; the source stays authoritative, the map is only an index.
@@ -82,6 +86,22 @@ Lighthouse was not run (spec requires throttled Lighthouse on the production hos
 ## Owner decision still required before production launch
 The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scripts/main.js`) is a **placeholder**, not an approved business rule. It must be decided (G8) before production launch; no other placeholder policy is customer-facing.
 
+## Inquiry slice (M4+M5 vertical slice) — built 2026-10-14, NOT yet deployed
+**Code:** `server/` (Fastify + SQLite; see `server/README.md`), `scripts/site-config.js` + `initContactForm` in `scripts/main.js`, tests (`server/test/api.test.js` 29 tests; `tests/inquiry.spec.js` mocked-API browser tests; `tests/inquiry-e2e.spec.js` real browser -> real server -> DB -> mail outbox). All pass locally; `npm audit` shows 0 vulnerabilities for both packages. **Not yet verified:** the real Resend email delivery, Turnstile with real keys, the AWS box, and a submission from the GitHub Pages site (none can happen until the gates below).
+**Customer flow:** validate in browser -> POST JSON over HTTPS -> server re-validates -> honeypot/Turnstile/rate limit -> single DB transaction commits (`synchronous=FULL`, idempotency key unique) -> only then `201` -> success panel ("received", reference id, "request, not a booking") -> owner email sent asynchronously. Success is shown **only** for HTTP 200/201 with `ok:true` and an id. Network error/timeout/5xx/odd response => "couldn't confirm it was received", input kept, email/phone shown, retry reuses the same idempotency key (content unchanged) so it can never duplicate. If the API URL isn't configured (current state of staging) the form keeps the M1 truthful "not available" behaviour.
+**Storage:** SQLite file on the server (`DB_PATH`), WAL + FULL sync, migrations in `server/src/db.js`, backup script `npm run backup` (cron + copy off-box is an owner/ops step). Fields: id, created_at, status(new...), name, email, phone, session type, preferred date, location, message, discount code, idempotency key, source origin, notify status/attempts/error. No IPs, no user agents stored. Retention/purge policy is NOT implemented (G8: owner decides; V1-SPEC F9 proposes spam 30d / unconfirmed 24 months).
+**Notification failures:** inquiry stays stored; client still sees success (it WAS stored); `notify_status`/`notify_last_error` recorded; retried with backoff up to 10 times (sweeper every 5 min + at start-up); `/health` (internal) reports `notifyBacklog`; CLI `npm run inquiries` lists unsent ones.
+**Security summary:** exact-origin CORS allowlist (+403 for unknown browser origins), JSON-only, 16 KB body cap, strict field types/lengths, unknown fields rejected, control chars stripped, parameterised SQL, honeypot, per-IP rate limit (5/10 min) + per-email daily cap (5), optional Turnstile (fails closed), plain-text email only (no HTML), no inquiry content in logs, generic error bodies, secrets only in the server env file, production start-up refuses wildcard/http origins and the dev notifier, no cookies so CSRF doesn't apply, any future admin UI must escape stored text (stored verbatim; tested).
+**Known limitations:** single server/single SQLite file (fine at this volume; the backup is the safety net); email delivery depends on Resend (free tier limits [verify]); until a domain is verified in Resend, mail can only go to the Resend account's own address from `onboarding@resend.dev` [verify], which is fine for owner notifications; no client confirmation email yet; no admin UI (CLI only).
+
+### Owner gates to make it work end-to-end (smallest actions)
+1. **AWS server facts + access** (needed for the deploy step): what kind of resource is it (EC2/Lightsail/other), OS, does it already run nginx/Apache, can you SSH (or give a deploy method), and is Node >= 20 allowed? Tell Claude these facts; do **not** paste keys/passwords into chat or files.
+2. **An HTTPS hostname for the API** (GitHub Pages is HTTPS, so browsers block an `http://` API): e.g. `api.<your-domain>` with a DNS A record to the server + certbot, or CloudFront/ALB in front (extra AWS service/cost). Without a domain there is no clean option; tell Claude which route you prefer.
+3. **Resend account + API key:** create a free account at resend.com, create an API key, and set `RESEND_API_KEY`, `NOTIFY_TO` (your email) in `/etc/kaileb-inquiry/env` **on the server only**. (Alternative: AWS SES, if you prefer to stay in AWS; needs a verified identity.)
+4. **Optional Turnstile:** free Cloudflare Turnstile widget (works with any host): put the *secret* in the server env file and the public *site key* in the GitHub repo variable `TURNSTILE_SITE_KEY`.
+5. **Point staging at the API:** GitHub repo > Settings > Secrets and variables > Actions > Variables > `INQUIRY_API_URL = https://<hostname>/api/inquiries`, then re-run the Pages workflow. Add the production origin to `ALLOWED_ORIGINS` later.
+6. Authorize Claude to perform/guide the real deployment (or do the README steps yourself).
+
 ## Known deferred visual/UX items (from M1 review; not blocking)
 - Home hero: green "Becker" wordmark and desktop nav text over bright sky/grass photo regions have low contrast — axe can't measure text over photos; needs eyes + a palette decision (G5).
 - Collections header glass gradient has a reddish cast over photos; collections scrim lightened modestly only.
@@ -103,3 +123,4 @@ The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scri
 - 2026-10-13: M2 image pipeline built (AVIF + JPEG fallback, hashed, manifest-driven `<picture>` markup, hero/collections as real images, lightbox sizing). Marked PARTIAL pending true originals (G6). 71 tests pass.
 - 2026-10-13: Added GitHub Pages staging workflow (build verified in CI; deploy waits on owner enabling Pages). Tests now run against a base URL / sub-path. Repo made public by owner.
 - 2026-10-13: Staging LIVE at https://kailebbecker.github.io/Kaileb-Photography-/ ; live-URL validation passed (71 tests).
+- 2026-10-14: Inquiry vertical slice (server/ + form integration + tests) built and tested locally on AWS-targeted Node/SQLite design; deployment gated on AWS access, HTTPS hostname, email key.

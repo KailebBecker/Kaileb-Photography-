@@ -55,6 +55,8 @@ Accept: F5 acceptance (Lighthouse on local static server as proxy; re-measure in
 
 ### M3 — 🔴 G1 decision: host/architecture + accounts. No code.
 
+> **Re-sequenced 2026-10-14:** M4 and M5 are being delivered as a thin vertical slice first (`server/`: inquiry API + durable storage + owner email + form integration), on the owner's existing **AWS server** (Node + SQLite) instead of Cloudflare Workers/D1. Built and tested locally; deployment waits on owner gates (see STATE.md "Inquiry slice"). Availability, admin, and lifecycle (M6) build on the same `server/` and `inquiries` table. The M4/M5 text below remains the checklist for what is left (availability endpoint, client confirmation email, retention).
+
 ### M4 — Backend foundation 🟢 (after G1)
 Scope: Worker project, D1 schema + migrations, `POST /api/requests` (validation, idempotency key, size limit, honeypot, Turnstile *test* keys, rate limit), `GET /api/availability` (rules + blocks + sessions only), config/secrets scaffolding, local dev + CI, unit/API tests, structured PII-free logging.
 Accept: AC-F1.2–F1.6 (local), AC-F2.1–2.5, direct-POST negative tests, all tests green. Local only — **no production resources.**

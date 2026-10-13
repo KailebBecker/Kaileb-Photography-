@@ -133,15 +133,16 @@ Form fields: name, email, phone, session type (dropdown: Weddings /
 Proposals / Graduations / Cars / Portraits), preferred date, location,
 message.
 
-**Submission handling — TEMPORARY, no backend until roadmap M5.** The
-form validates (inline errors, `aria-invalid`) but a valid attempt never
-claims success: it says online submission is not available, sends and logs
-nothing, keeps the visitor's input, and points to the published email/phone.
-A static notice above the form says the same, and the submit button ships
-`disabled` so there is no no-JS path. The real flow replaces
-`INQUIRY_BACKEND_ENABLED` / `submitInquiry()` in `scripts/main.js` (see
-docs/V1-SPEC.md F1). Do not add a mailto/localStorage workaround. The date
-picker's minimum notice (`MIN_LEAD_DAYS`) is a placeholder owner decision.
+**Submission handling.** The form validates (inline errors, `aria-invalid`).
+If `window.SITE_CONFIG.inquiryApiUrl` (scripts/site-config.js, empty in git) is an
+https URL, a valid submit POSTs JSON to the inquiry API (`server/`) and shows
+success only when the server confirms it stored the inquiry; any other outcome is
+shown as "couldn't confirm it was received" with the input kept, email/phone
+shown, and a safe retry (idempotency key). With no API configured it falls back
+to the truthful "online submission isn't available yet" message and sends
+nothing. Never add a mailto/localStorage workaround, never show success on
+anything but a stored-ok response. The date picker's minimum notice
+(`MIN_LEAD_DAYS`) is a placeholder owner decision (client-side only).
 
 ## Tests
 

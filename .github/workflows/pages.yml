@@ -36,12 +36,29 @@ jobs:
       - name: Check image derivatives are current
         run: npm run images:check
 
+      # Backend unit/API tests (in-memory DB, no network, no secrets).
+      - name: Inquiry API tests
+        run: npm --prefix server ci && npm --prefix server test
+
       - name: Assemble staging artifact (runtime files only)
+        env:
+          # Public, non-secret settings from repository *variables* (Settings > Secrets and variables > Actions > Variables).
+          # Empty => the form stays in its truthful "online submission not available" mode.
+          INQUIRY_API_URL: ${{ vars.INQUIRY_API_URL }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: |
           mkdir _site
           cp *.html _site/
           cp -r styles _site/styles
-          mkdir _site/scripts && cp scripts/main.js _site/scripts/
+          mkdir _site/scripts && cp scripts/main.js scripts/site-config.js _site/scripts/
+          # Per-environment config: only accept a plain https URL / site key; never echo secrets (none are used here).
+          if [ -n "$INQUIRY_API_URL" ]; then
+            echo "$INQUIRY_API_URL" | grep -Eq '^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9._~/-]*)?$' || { echo "INQUIRY_API_URL must be a plain https URL"; exit 1; }
+          fi
+          if [ -n "$TURNSTILE_SITE_KEY" ]; then
+            echo "$TURNSTILE_SITE_KEY" | grep -Eq '^[A-Za-z0-9_-]{8,64}$' || { echo "TURNSTILE_SITE_KEY looks invalid"; exit 1; }
+          fi
+          printf 'window.SITE_CONFIG = { inquiryApiUrl: "%s", turnstileSiteKey: "%s" };\n' "$INQUIRY_API_URL" "$TURNSTILE_SITE_KEY" > _site/scripts/site-config.js
           # Only generated web derivatives + placeholders/social card; no manifest, no sources.
           mkdir _site/images && cp -r images/. _site/images/ && rm -f _site/images/manifest.json
           touch _site/.nojekyll
@@ -60,6 +77,8 @@ jobs:
         run: |
           test -f _site/index.html
           test -f _site/scripts/main.js
+          test -f _site/scripts/site-config.js
+          test ! -e _site/server
           test -z "$(ls _site/images | grep -E '^manifest' || true)"
           test ! -e _site/source && test ! -e _site/originals && test ! -e _site/docs && test ! -e _site/tests
           grep -q 'noindex' _site/index.html
