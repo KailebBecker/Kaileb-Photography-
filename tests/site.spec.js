@@ -205,6 +205,16 @@ test.describe("collections", () => {
     await expect(page.locator(".dot").nth(2)).toHaveAttribute("aria-current", "true");
     await page.keyboard.press("PageDown");
     await expect.poll(idx).toBe(3);
+    // Let the browser's smooth-scroll animation settle before the next key (a keypress mid-animation can be dropped).
+    let last = -1;
+    await expect
+      .poll(async () => {
+        const y = await page.evaluate(() => window.scrollY);
+        const settled = y === last;
+        last = y;
+        return settled;
+      }, { intervals: [150] })
+      .toBe(true);
     await page.keyboard.press("PageUp");
     await expect.poll(idx).toBeLessThanOrEqual(2);
   });
