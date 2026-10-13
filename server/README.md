@@ -8,8 +8,11 @@ the existing AWS server behind an HTTPS reverse proxy. **Not deployed yet** (see
 ```
 cd server && npm ci
 NODE_ENV=development ALLOWED_ORIGINS=http://localhost:4173 NOTIFY_PROVIDER=dev DEV_MAIL_FILE=./data/mail.jsonl npm start
-npm test                 # 29 API/security tests (in-memory DB, no network)
-npm run inquiries        # list stored inquiries (CLI; contains PII)
+npm test                 # 40 API/security/lifecycle/backup tests (in-memory DB, no network)
+npm run inquiries -- list                       # owner CLI (output contains PII)
+npm run inquiries -- accept <id> --note "..."   # also decline|cancel|complete|spam
+npm run inquiries -- confirm <id> --date 2026-12-20 --start 16:00 --minutes 90   # refuses overlaps
+npm run inquiries -- purge --days 365 --status declined,spam [--yes]            # dry run unless --yes
 ```
 Browser end-to-end tests live in `../tests/inquiry-e2e.spec.js` (`npm test` at the repo root).
 

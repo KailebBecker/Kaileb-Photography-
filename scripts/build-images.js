@@ -63,6 +63,7 @@ const GRID_SIZES = "(max-width: 600px) 88vw, 28vw";
 const TEASER_SIZES = "(max-width: 699px) 46vw, (max-width: 1240px) 30vw, 380px";
 const PRESETS = {
   grid: { sizes: GRID_SIZES, loading: "lazy" },
+  "grid-first": { sizes: GRID_SIZES, loading: "eager", fetchpriority: "high" }, // first photo on the page: likely LCP
   teaser: { sizes: TEASER_SIZES, loading: "lazy" },
   hero: { sizes: "100vw", loading: "eager", fetchpriority: "high", imgClass: "hero-photo" },
   cover: { sizes: "100vw", loading: "lazy", imgClass: "scroll-photo" },

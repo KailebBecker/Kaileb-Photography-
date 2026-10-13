@@ -99,7 +99,8 @@ test("gallery grid photos are not layout-shifting and use responsive sources", a
   for (const i of info) {
     expect(Number(i.w)).toBeGreaterThan(0);
     expect(Number(i.h)).toBeGreaterThan(0);
-    expect(i.lazy).toBe("lazy");
+    // The first photo is eager (likely LCP); everything else lazy.
+    expect(info.indexOf(i) === 0 ? "eager" : "lazy").toBe(i.lazy);
     expect(i.srcset).toBe(true);
   }
 });

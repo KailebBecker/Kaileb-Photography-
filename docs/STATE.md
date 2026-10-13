@@ -1,7 +1,7 @@
 # Project State & Autonomous Workflow
 
 **Update this file at the end of every session. It is the only place that tracks progress.**
-Last updated: 2026-10-14 · Phase: **Inquiry vertical slice built and tested locally; deployment waits on AWS access + HTTPS hostname + email key (owner gates below). M2 partial (originals, G6).**
+Last updated: 2026-10-14 · Phase: **All safe local/staging V1 work done. Remaining work is blocked on owner/infrastructure/product gates (list below).**
 
 ## Doc map (each fact lives in exactly one place)
 | File | Controls |
@@ -16,12 +16,22 @@ Last updated: 2026-10-14 · Phase: **Inquiry vertical slice built and tested loc
 | `BACKEND.md` | Legacy notes (Wise Agent, AWS box). Superseded by ARCHITECTURE.md once G1/G3 decided |
 
 ## Next milestone
-**Get the inquiry form live on staging** (owner gates in "Inquiry slice" below), then **M6-lite: owner view of requests + accept/decline/confirm lifecycle** (the CLI is only a stopgap). Availability, calendar, payments, Wise Agent remain later.
+**Nothing unblocked remains for Claude without an owner input.** In priority order, the owner inputs that unblock the next work:
+1. **Inquiry API live** (AWS facts/access + HTTPS hostname + Resend key; see "Inquiry slice" gates) -> then Claude deploys/verifies end-to-end from staging.
+2. **Owner policies (G8):** minimum notice, weekly shoot hours, deposit amount/method, cancellation terms, data retention, discount-code meaning -> unblocks availability (M4/M6), client emails/terms text, privacy page, purge schedule.
+3. **Content (G5):** photo of Kaileb, real testimonials, Weddings stance, palette decision -> unblocks M7 (about/trust content, hero contrast).
+4. **Full-resolution originals (G6)** -> finishes M2 quality (collections/hero).
+5. **Domain ownership** (`kailebbeckerphotography.com`?) + sending domain (for client confirmation emails, Search Console, production canonicals).
+6. **Auth approach for a web admin UI** (security-sensitive owner decision) -> then a web version of the CLI lifecycle.
+7. **Calendar provider (G2)** -> V1.1 external calendar.
 
 ## Decisions log
 | Date | Decision | Status |
 |---|---|---|
 | 2026-10-14 | **Backend runs on the owner's existing AWS server** (Node + Fastify + SQLite behind an HTTPS reverse proxy). Supersedes the Cloudflare recommendation for the inquiry slice; the AWS box details (OS, access, web server, hostname) are still unknown | Owner-directed (G1 for the inquiry API effectively answered; rest of architecture unchanged) |
+| 2026-10-14 | Owner lifecycle (accept/decline/confirm/cancel/complete/spam, notes, delete, purge) built as `server/src/lifecycle.js` + CLI with a DB audit trail (`inquiry_events`); confirming needs an explicit date/start/length and refuses overlapping confirmed sessions (no invented defaults). **No web admin yet** — auth approach is an owner gate | Done (CLI only) |
+| 2026-10-14 | Fonts self-hosted (Inter, Playfair Display, Special Elite; latin subset, OFL) in `fonts/`, no third-party requests on any page (tested) | Done |
+| 2026-10-14 | `purge` has no default policy: the owner must pass days + statuses; dry-run by default; accepted/confirmed can never be purged | Done |
 | 2026-10-14 | Inquiry + request are one entity (V1-SPEC); table `inquiries` already carries the NEW→CONFIRMED status enum so M6 builds on it | Done |
 | 2026-10-14 | Email via Resend HTTP API (plain text). Client confirmation email is NOT part of this slice (needs a verified sending domain / DNS) | Done / follow-up |
 | 2026-10-14 | Server rejects only *past* dates; the 7-day lead time stays a client-side placeholder (G8), not enforced by the API | Done |
@@ -87,6 +97,7 @@ Lighthouse was not run (spec requires throttled Lighthouse on the production hos
 The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scripts/main.js`) is a **placeholder**, not an approved business rule. It must be decided (G8) before production launch; no other placeholder policy is customer-facing.
 
 ## Inquiry slice (M4+M5 vertical slice) — built 2026-10-14, NOT yet deployed
+**Owner CLI (no web UI yet):** `npm run inquiries -- list|show|accept|decline|confirm|cancel|complete|spam|note|delete|purge` in `server/` (see header of `server/src/cli.js`); CLI actions do NOT email the client (reply from your inbox).
 **Code:** `server/` (Fastify + SQLite; see `server/README.md`), `scripts/site-config.js` + `initContactForm` in `scripts/main.js`, tests (`server/test/api.test.js` 29 tests; `tests/inquiry.spec.js` mocked-API browser tests; `tests/inquiry-e2e.spec.js` real browser -> real server -> DB -> mail outbox). All pass locally; `npm audit` shows 0 vulnerabilities for both packages. **Not yet verified:** the real Resend email delivery, Turnstile with real keys, the AWS box, and a submission from the GitHub Pages site (none can happen until the gates below).
 **Customer flow:** validate in browser -> POST JSON over HTTPS -> server re-validates -> honeypot/Turnstile/rate limit -> single DB transaction commits (`synchronous=FULL`, idempotency key unique) -> only then `201` -> success panel ("received", reference id, "request, not a booking") -> owner email sent asynchronously. Success is shown **only** for HTTP 200/201 with `ok:true` and an id. Network error/timeout/5xx/odd response => "couldn't confirm it was received", input kept, email/phone shown, retry reuses the same idempotency key (content unchanged) so it can never duplicate. If the API URL isn't configured (current state of staging) the form keeps the M1 truthful "not available" behaviour.
 **Storage:** SQLite file on the server (`DB_PATH`), WAL + FULL sync, migrations in `server/src/db.js`, backup script `npm run backup` (cron + copy off-box is an owner/ops step). Fields: id, created_at, status(new...), name, email, phone, session type, preferred date, location, message, discount code, idempotency key, source origin, notify status/attempts/error. No IPs, no user agents stored. Retention/purge policy is NOT implemented (G8: owner decides; V1-SPEC F9 proposes spam 30d / unconfirmed 24 months).
@@ -101,6 +112,9 @@ The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scri
 4. **Optional Turnstile:** free Cloudflare Turnstile widget (works with any host): put the *secret* in the server env file and the public *site key* in the GitHub repo variable `TURNSTILE_SITE_KEY`.
 5. **Point staging at the API:** GitHub repo > Settings > Secrets and variables > Actions > Variables > `INQUIRY_API_URL = https://<hostname>/api/inquiries`, then re-run the Pages workflow. Add the production origin to `ALLOWED_ORIGINS` later.
 6. Authorize Claude to perform/guide the real deployment (or do the README steps yourself).
+
+## Performance and SEO (2026-10-14, local Lighthouse 13, mobile, throttled, gzip server)
+Before (render-blocking Google Fonts, lazy first photo): home perf 87 (FCP 3.1 s, LCP 3.1 s), gallery 76 (LCP 4.6 s), contact 95. **After** self-hosted fonts + eager/high-priority first gallery photo: home **96** (FCP 1.3 s, LCP 2.6 s, CLS 0), gallery **91** (LCP 3.3 s, CLS 0.001); accessibility, best-practices and SEO scores are 100 on the pages measured. LCP is still slightly above the 2.5 s spec target on home/gallery in this local throttled run; the final measurement belongs on the real production host (M9; compression/CDN will change it). Added: Twitter card + og:image:alt tags on all pages, home-page `ProfessionalService` JSON-LD (uses the existing canonical domain; **verify domain ownership before launch**), `404.html`. Not done (owner-dependent): privacy page / consent text (G8), sitemap `lastmod`, Search Console, Google Business Profile.
 
 ## Known deferred visual/UX items (from M1 review; not blocking)
 - Home hero: green "Becker" wordmark and desktop nav text over bright sky/grass photo regions have low contrast — axe can't measure text over photos; needs eyes + a palette decision (G5).
@@ -124,3 +138,4 @@ The 7-day minimum lead time on the contact date picker (`MIN_LEAD_DAYS` in `scri
 - 2026-10-13: Added GitHub Pages staging workflow (build verified in CI; deploy waits on owner enabling Pages). Tests now run against a base URL / sub-path. Repo made public by owner.
 - 2026-10-13: Staging LIVE at https://kailebbecker.github.io/Kaileb-Photography-/ ; live-URL validation passed (71 tests).
 - 2026-10-14: Inquiry vertical slice (server/ + form integration + tests) built and tested locally on AWS-targeted Node/SQLite design; deployment gated on AWS access, HTTPS hostname, email key.
+- 2026-10-14: Autonomous pass: request lifecycle + owner CLI, backup/restore test, self-hosted fonts and Lighthouse fixes, Twitter/JSON-LD/404, tests (116 browser + 40 server). Stopped at owner gates.

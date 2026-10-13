@@ -50,6 +50,7 @@ jobs:
           mkdir _site
           cp *.html _site/
           cp -r styles _site/styles
+          cp -r fonts _site/fonts
           mkdir _site/scripts && cp scripts/main.js scripts/site-config.js _site/scripts/
           # Per-environment config: only accept a plain https URL / site key; never echo secrets (none are used here).
           if [ -n "$INQUIRY_API_URL" ]; then
@@ -79,6 +80,8 @@ jobs:
           test -f _site/scripts/main.js
           test -f _site/scripts/site-config.js
           test ! -e _site/server
+          test -f _site/fonts/inter-variable-latin.woff2
+          ! grep -rq 'fonts.googleapis.com' _site
           test -z "$(ls _site/images | grep -E '^manifest' || true)"
           test ! -e _site/source && test ! -e _site/originals && test ! -e _site/docs && test ! -e _site/tests
           grep -q 'noindex' _site/index.html

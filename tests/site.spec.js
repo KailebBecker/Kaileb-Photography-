@@ -10,9 +10,16 @@ for (const name of PAGES) {
     page.on("console", (m) => m.type() === "error" && problems.push(m.text()));
     page.on("requestfailed", (r) => problems.push("FAILED " + r.url()));
     page.on("pageerror", (e) => problems.push(e.message));
+    const external = [];
+    page.on("request", (r) => {
+      const u = new URL(r.url());
+      if (!/^https?:$/.test(u.protocol)) return; // data: etc.
+      if (u.origin !== new URL(page.url() === "about:blank" ? r.url() : page.url()).origin) external.push(r.url());
+    });
     await page.goto(`${name}.html`);
     await page.waitForLoadState("load");
     // Google Fonts are third-party and may be unreachable offline; only fail on first-party problems.
+    expect(external, "no third-party requests (fonts etc. are self-hosted)").toEqual([]);
     const own = problems.filter((p) => !/fonts\.(googleapis|gstatic)\.com/.test(p) && !/ERR_(FAILED|INTERNET|NAME)/.test(p));
     expect(own).toEqual([]);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -30,6 +30,24 @@ const MIGRATIONS = [
   CREATE INDEX inquiries_email_created ON inquiries (email, created_at);
   CREATE INDEX inquiries_notify ON inquiries (notify_status, notify_attempts);
   `,
+  // 2: owner lifecycle (accept/decline/confirm/...). Confirmed sessions carry an explicit
+  // date + start + length chosen by the owner (no defaults are assumed anywhere).
+  `
+  ALTER TABLE inquiries ADD COLUMN updated_at TEXT;
+  ALTER TABLE inquiries ADD COLUMN session_date TEXT;
+  ALTER TABLE inquiries ADD COLUMN session_start_min INTEGER;
+  ALTER TABLE inquiries ADD COLUMN session_minutes INTEGER;
+  CREATE TABLE inquiry_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    inquiry_id  TEXT NOT NULL REFERENCES inquiries(id) ON DELETE CASCADE,
+    at          TEXT NOT NULL,
+    from_status TEXT,
+    to_status   TEXT,
+    note        TEXT
+  );
+  CREATE INDEX inquiry_events_inquiry ON inquiry_events (inquiry_id, id);
+  CREATE INDEX inquiries_session ON inquiries (session_date) WHERE status = 'confirmed';
+  `,
 ];
 
 function openDatabase(file) {
