@@ -35,10 +35,10 @@ Inputs, evaluated server-side only, combined as a **union of unavailability** (a
 1. **Default weekly rules** (owner-set): e.g. weekdays after 5:30 pm, Sat/Sun all day. Outside rules ⇒ unavailable unless owner overrides.
 2. **Manual blocks** (V1, first-class): single dates, multiple dates, ranges, whole weeks, optional time range; each has a private label visible only to owner.
 3. **Confirmed sessions** (from Requests).
-4. **External calendar free/busy (V1.1, optional):** busy intervals only, no event data stored. See ARCHITECTURE.md §Calendar.
+4. **External calendar free/busy (Google Calendar; built 2026-10-20, optional until the owner authorises it):** busy intervals only, no event data stored. When switched on it is a *required* source (see below). Design and Google specifics: ARCHITECTURE.md §3.
 
-Overlap rule: union wins. A manual "open override" for a date that external calendar shows busy is **V1.1** and must be an explicit owner action. External-calendar failure must **fail safely**: if a required external conflict source cannot be verified, the system must never silently expose a date as available. Exact degraded-state behavior is decided in the V1.1 calendar milestone (M10). V1 has no external-calendar dependency and is unaffected: manual rules + blocks + confirmed sessions are complete on their own.
-Public API returns a fixed minimal shape: `{ "date": "2026-11-14", "available": true }` (month view returns an array of those). No timestamps, no source, no counts. A test asserts the response shape and that no private strings appear.
+Overlap rule: union wins. A manual "open override" of a date the external calendar shows busy is **not** built; the owner can instead remove the block or confirm with an explicit `--ignore-calendar` (recorded in the request history). **Failure behaviour (decided 2026-10-20):** once Google Calendar is connected it is required. If it cannot be verified (never synced, last good sync older than 60 minutes, or access revoked/misconfigured), every date is reported **unavailable and unverified**: the public site never claims a date is available, the website shows a neutral "can't check availability right now" message (the contact form still works; availability never blocks an inquiry), and the owner CLI refuses to confirm a session unless `--ignore-calendar` is given. V1 without a connected calendar is unaffected.
+Public API (`GET /api/availability?month=YYYY-MM` or `?date=`) returns a fixed minimal shape: per day `{ "date": "2026-11-14", "available": true }` inside `{ ok, month, verified, days: [...] }` (single date: `{ ok, verified, date, available }`). `verified:false` is the only extra signal and means a required calendar could not be checked (all dates then `available:false`). No timestamps, no source, no reasons, no counts. Tests assert the response shape and that no private strings appear anywhere.
 
 ## Owner/admin (V1 minimum)
 Behind mature auth (see ARCHITECTURE.md), mobile-friendly, one page-set:
@@ -100,7 +100,7 @@ See ARCHITECTURE.md §Security. **Acceptance:** security checklist items all pas
 Domain on HTTPS, redirects www/apex, `.html`→clean URLs (or canonical consistent), monitored. **Acceptance:** end-to-end smoke test on production: submit request from phone → owner email arrives → accept in admin → client email arrives → confirm → date shows unavailable on public form.
 
 ## V1.1 (near-term, not blocking launch)
-External calendar free/busy (Microsoft/Google, provider-dependent); Stripe Payment Link per session; Wise Agent forward (if still wanted); upcoming-sessions agenda; reminder email 48 h before; optional temporary hold with expiry; client self-cancel link; per-category SEO landing pages; photo EXIF-free alt-text workflow; review request email; simple analytics (privacy-friendly).
+Microsoft/other external calendars (Google Calendar free/busy is built, awaiting the owner's authorisation); Stripe Payment Link per session; Wise Agent forward (if still wanted); upcoming-sessions agenda; reminder email 48 h before; optional temporary hold with expiry; client self-cancel link; per-category SEO landing pages; photo EXIF-free alt-text workflow; review request email; simple analytics (privacy-friendly).
 
 ## V2 (deferred deliberately)
 Online payments/invoicing/contracts/e-sign; client galleries & downloads; instant booking; multi-photographer; full CRM; mini-sessions/event slots; blog; admin photo upload UI; i18n.

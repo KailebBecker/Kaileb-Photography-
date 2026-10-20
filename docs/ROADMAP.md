@@ -14,7 +14,7 @@ Autonomy key: 🟢 Claude may execute alone · 🟡 Claude executes up to a name
 | 5 | Manual availability mgmt | None | Block dates/ranges/weeks in admin | New | P0 | M6 | Low | M | Weekly rules (G8) |
 | 6 | Owner admin | None | Requests + availability + settings, secure | New | P0 | G1, M4 | High (security) | L | G1 |
 | 7 | Booking lifecycle | None | NEW→ACCEPTED→CONFIRMED etc., double-booking guard | New | P0 | M6 | Med | M | Cancellation terms (G8) |
-| 8 | External calendar free/busy | None | **V1.1** adapter (Google/MS), privacy-tested | Deferred | P2 | G2, V1 live | High (privacy/policy) | L | Provider + employer policy |
+| 8 | External calendar free/busy | **Google adapter built and tested locally 2026-10-20** (privacy-tested, fail-safe); manual rules/blocks/sessions engine + owner CLI built | Per-date availability, busy intervals only, fails safe | Needs owner's Google authorization; website form not yet wired to `GET /api/availability` | P2 | G2 answered (Google) | High (privacy/policy) | L | Owner Google Cloud setup (server/README.md §10) |
 | 9 | Deposits/payments | Promised in copy only | Offline instructions in V1; Stripe Link V1.1 | Copy+email only in V1 | P1 | G8, G9 | Med | S (V1) | Method, amount |
 | 10 | Image delivery | Single JPEG per photo, CSS hero, no srcset, no dims in gallery | Derivatives, `<picture>`, hero `<img>`, hashed caching | Pipeline + markup | P0 | G6 (soft) | Low | M | Originals location |
 | 11 | Lightbox | Open/close only | + prev/next, swipe, arrows, bigger derivative | Enhance | P1 | M2 | Low | S | – |
@@ -33,7 +33,7 @@ Autonomy key: 🟢 Claude may execute alone · 🟡 Claude executes up to a name
 |---|---|---|
 | **G0** | Approve V1 spec, architecture direction, roadmap | M1 |
 | **G1** | Choose host/architecture (rec: Cloudflare A; alt: AWS box — answer BACKEND.md Qs); create accounts | M4 |
-| **G2** | Identify calendar provider (iPhone → Settings → Calendar → Accounts); check employer policy; choose "mirror to Google/Outlook" vs manual-only | M10 (not V1) |
+| **G2** | ~~Identify calendar provider~~ **ANSWERED 2026-10-20: Google Calendar on a Gmail account.** Remaining: owner completes the Google Cloud/OAuth setup and authorizes (server/README.md §10) | M10 |
 | **G3** | Is Wise Agent required at V1 or V1.1? | M5 |
 | **G4** | Paid/new services: email provider, Turnstile, domain email auth (DNS) | M5 |
 | **G5** | Content: Kaileb photo, testimonials, wedding status, palette (green vs. "no green") | M7 |
@@ -82,7 +82,7 @@ Scope: production Cloudflare project, domain/DNS, SPF/DKIM/DMARC, secrets, deplo
 Accept: F11 end-to-end smoke test on a real phone; Lighthouse targets met; backups confirmed. **V1 is DONE here.** Owner presses deploy/DNS; Claude prepares runbook.
 
 ### V1.1 (post-launch, each its own gated milestone)
-M10 External calendar adapter (G2; privacy test mandatory) · M11 Stripe Payment Link (G9) · M12 Wise Agent forward (G3) · M13 agenda/reminders/holds · M14 per-category SEO pages.
+M10 External calendar adapter — **◐ Google adapter + availability engine built locally (2026-10-20); real authorization pending**; website form wiring is a small follow-up · M11 Stripe Payment Link (G9) · M12 Wise Agent forward (G3) · M13 agenda/reminders/holds · M14 per-category SEO pages.
 
 ## Dependency sketch
 `G0 → M1 → M2 ┐` · `G1 → M4 → M5 (G3,G4) → M6 → M8 → M9 (G7)` · `M7 parallel (G5,G8)` · `M10+ after M9`.
