@@ -28,3 +28,7 @@ id_ed25519*
 *.sqlite
 *.sqlite3
 *.jsonl
+# Google OAuth client downloads and token files must never be committed (or left in this OneDrive-synced folder).
+client_secret*.json
+*credentials*.json
+token*.json
