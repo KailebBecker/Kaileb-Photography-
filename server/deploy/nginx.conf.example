@@ -1,34 +1,66 @@
-# Example nginx server block for the inquiry API (TLS terminates here; Node listens on 127.0.0.1 only).
-# Replace api.example.com. Get the certificate with certbot (Let's Encrypt) once DNS points at the server.
-# If the server already runs nginx, add this as a new server block; do not touch other sites.
+# nginx site for the inquiry API: TLS terminates here; Node listens on 127.0.0.1:8787 only.
+# Install (replace the placeholder everywhere; see server/README.md step 9):
+#   sed 's/__API_HOSTNAME__/api.example.com/g' deploy/nginx.conf.example | sudo tee /etc/nginx/sites-available/kaileb-inquiry
+# The certificate must exist first (certbot certonly ...), or `nginx -t` fails on the paths below.
+# Additive: a new server block for this hostname only; does not change other sites.
+# Works with Ubuntu's packaged nginx (1.18 / 1.24).
 
 server {
     listen 80;
-    server_name api.example.com;
-    return 301 https://$host$request_uri;
+    listen [::]:80;
+    server_name __API_HOSTNAME__;
+    server_tokens off;
+
+    # Let's Encrypt HTTP-01 challenges (certbot --nginx adds its own handling; this covers --webroot).
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
 server {
-    listen 443 ssl;
-    http2 on;
-    server_name api.example.com;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name __API_HOSTNAME__;
+    server_tokens off;
 
-    # ssl_certificate / ssl_certificate_key lines are added by certbot.
+    ssl_certificate     /etc/letsencrypt/live/__API_HOSTNAME__/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/__API_HOSTNAME__/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
 
     client_max_body_size 16k;          # the API itself also enforces a 16 KB body limit
+    client_body_timeout 10s;
     add_header Strict-Transport-Security "max-age=31536000" always;
     add_header X-Content-Type-Options nosniff always;
 
-    # Only the inquiry endpoint is exposed publicly. /health stays internal:
-    # on the server run  curl http://127.0.0.1:8787/health
+    # The only public endpoint. POST = submit, OPTIONS = CORS preflight (answered by the app,
+    # which applies the exact-origin allowlist).
     location = /api/inquiries {
+        limit_except POST OPTIONS { deny all; }
         proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $remote_addr;   # overwrite, never append client-supplied values
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 5s;
         proxy_read_timeout 20s;
     }
 
+    # Health/backlog is for the server itself only (verifies TLS + nginx + app end to end):
+    #   curl --resolve __API_HOSTNAME__:443:127.0.0.1 https://__API_HOSTNAME__/health
+    location = /health {
+        allow 127.0.0.1;
+        allow ::1;
+        deny all;
+        proxy_pass http://127.0.0.1:8787;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    # Nothing else exists: no files, no database, no other app routes.
     location / {
         return 404;
     }

@@ -1,0 +1,9 @@
+#!/bin/sh
+# Owner CLI on the server. Install: sudo install -m 0755 deploy/kaileb-inquiries /usr/local/bin/
+#   kaileb-inquiries list | show <id> | accept <id> | ...   (full usage: kaileb-inquiries help)
+# Always runs as the service user, so SQLite never creates root-owned files that would
+# stop the service. Output contains clients' personal information.
+set -eu
+cd /
+exec sudo -u kaileb-inquiry env NODE_ENV=production DB_PATH=/var/lib/kaileb-inquiry/inquiries.db \
+  /usr/bin/node /opt/kaileb-inquiry/app/server/src/cli.js "$@"

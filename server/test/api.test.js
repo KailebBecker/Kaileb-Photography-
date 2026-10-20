@@ -333,5 +333,9 @@ test("production config refuses wildcard/http origins and the dev notifier", () 
   bad({ ALLOWED_ORIGINS: "http://example.com" });
   bad({ ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "dev" });
   bad({ ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "resend" });
+  bad({ ALLOWED_ORIGINS: "https://kailebbecker.github.io/Kaileb-Photography-/" }); // a page URL, not an origin
+  bad({ ALLOWED_ORIGINS: "https://a.example", TRUST_PROXY: "true", HOST: "0.0.0.0" }); // spoofable client IP
   assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "resend", RESEND_API_KEY: "k", NOTIFY_TO: "o@e.co", NOTIFY_FROM: "f@e.co" })));
+  // Interim deployment before the Resend key exists: stores inquiries, emails nobody.
+  assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ALLOWED_ORIGINS: "https://a.example/,https://b.example", TRUST_PROXY: "true", NOTIFY_PROVIDER: "none" })));
 });

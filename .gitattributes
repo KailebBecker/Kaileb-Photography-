@@ -1,0 +1,2 @@
+# Server deployment templates are installed on Linux as-is: always LF.
+server/deploy/** text eol=lf

@@ -1,0 +1,27 @@
+# /etc/systemd/system/kaileb-inquiry-backup.service — one verified SQLite backup.
+# Triggered daily by kaileb-inquiry-backup.timer; run by hand before every update:
+#   sudo systemctl start kaileb-inquiry-backup.service
+# Logs: journalctl -u kaileb-inquiry-backup
+[Unit]
+Description=Backup of the Kaileb Becker Photography inquiry database
+
+[Service]
+Type=oneshot
+User=kaileb-inquiry
+Group=kaileb-inquiry
+WorkingDirectory=/opt/kaileb-inquiry/app/server
+EnvironmentFile=/etc/kaileb-inquiry/env
+Environment=BACKUP_DIR=/var/backups/kaileb-inquiry
+ExecStart=/usr/bin/node src/backup.js
+UMask=0077
+SyslogIdentifier=kaileb-inquiry-backup
+
+NoNewPrivileges=true
+CapabilityBoundingSet=
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+# The data directory must be writable: a WAL database reader uses its shared-memory file.
+ReadWritePaths=/var/lib/kaileb-inquiry /var/backups/kaileb-inquiry
+RestrictAddressFamilies=AF_UNIX

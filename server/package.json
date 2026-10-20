@@ -4,7 +4,7 @@
   "private": true,
   "description": "Small inquiry API for Kaileb Becker Photography (Fastify + SQLite). Runs on the existing AWS server behind an HTTPS reverse proxy.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "type": "commonjs",
   "scripts": {

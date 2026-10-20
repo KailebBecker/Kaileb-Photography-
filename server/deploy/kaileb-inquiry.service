@@ -1,26 +1,49 @@
+# /etc/systemd/system/kaileb-inquiry.service — Kaileb Becker Photography inquiry API.
+# Paths match server/README.md. Logs: journalctl -u kaileb-inquiry
 [Unit]
 Description=Kaileb Becker Photography inquiry API
-After=network.target
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
 User=kaileb-inquiry
 Group=kaileb-inquiry
-WorkingDirectory=/opt/kaileb-inquiry/server
+WorkingDirectory=/opt/kaileb-inquiry/app/server
+# Backstop: production safety checks apply even if the env file omits NODE_ENV.
+Environment=NODE_ENV=production
 EnvironmentFile=/etc/kaileb-inquiry/env
+# System-wide Node >= 22 (NodeSource/apt). Not an nvm install in a home directory.
 ExecStart=/usr/bin/node src/index.js
 Restart=on-failure
-RestartSec=3
+RestartSec=5
+# Graceful shutdown: the app closes the server and the database on SIGTERM.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+# New files (database, WAL) are private to the service user.
+UMask=0077
+SyslogIdentifier=kaileb-inquiry
 
-# Hardening: the service can only write to its own data directory.
+# Hardening: no privileges, read-only system, writes only to its data directory.
 NoNewPrivileges=true
+CapabilityBoundingSet=
 PrivateTmp=true
+PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
 ReadWritePaths=/var/lib/kaileb-inquiry
 ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+# /etc/systemd/system/kaileb-inquiry-backup.timer — daily verified backup (keeps the newest 30).
+# Check: systemctl list-timers kaileb-inquiry-backup.timer
+[Unit]
+Description=Daily backup of the inquiry database
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=10min
+# Run at next boot if the server was off at the scheduled time.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

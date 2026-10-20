@@ -38,12 +38,26 @@ function loadConfig(env = process.env) {
   return config;
 }
 
+const LOOPBACK = new Set(["127.0.0.1", "::1", "localhost"]);
+
+function isBareOrigin(o) {
+  try {
+    return new URL(o).origin === o;
+  } catch {
+    return false;
+  }
+}
+
 // Fail fast on unsafe production configuration instead of silently degrading.
 function assertProductionReady(config) {
   if (!config.production) return;
   const problems = [];
   if (!config.allowedOrigins.length) problems.push("ALLOWED_ORIGINS must list the site origin(s)");
   if (config.allowedOrigins.some((o) => o === "*" || !/^https:\/\//.test(o))) problems.push("ALLOWED_ORIGINS must be exact https:// origins (no wildcard)");
+  // A browser's Origin header never has a path, so "https://user.github.io/repo/" would silently never match.
+  if (config.allowedOrigins.some((o) => !isBareOrigin(o))) problems.push("ALLOWED_ORIGINS entries must be scheme + host only (no path), e.g. https://kailebbecker.github.io");
+  // Trusting X-Forwarded-For is only safe when nothing but the local reverse proxy can reach the port.
+  if (config.trustProxy && !LOOPBACK.has(config.host)) problems.push("TRUST_PROXY=true requires HOST to be a loopback address (127.0.0.1) behind the local reverse proxy");
   if (config.notify.provider === "dev") problems.push("NOTIFY_PROVIDER=dev is not allowed in production");
   if (config.notify.provider === "resend" && !(config.notify.resendApiKey && config.notify.to && config.notify.from)) {
     problems.push("NOTIFY_PROVIDER=resend needs RESEND_API_KEY, NOTIFY_TO and NOTIFY_FROM");
