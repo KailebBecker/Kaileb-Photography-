@@ -50,6 +50,7 @@ const arg = (name) => {
     authorization_denied: "Authorization was cancelled in the browser.",
     timed_out: "No response within 5 minutes.",
     unexpected_scope: "Google granted a different scope than calendar.freebusy. Nothing was saved. Check the consent screen's scopes.",
+    "token_ok_but_freebusy_failed:calendar_not_found": "Sign-in worked but Google could not find that calendar. Re-run with --calendar-id <the calendar's full Gmail address> (the nickname \"primary\" is rejected under this narrow scope), and make sure that account has opened Google Calendar at least once.",
     no_refresh_token: "Google did not issue a refresh token. Remove this app at https://myaccount.google.com/permissions and run the command again.",
   };
   console.error(`\nFailed: ${hints[err.message] || err.message}`);

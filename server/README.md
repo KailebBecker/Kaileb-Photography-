@@ -562,8 +562,10 @@ submissions are never blocked by this: the contact form keeps working.
 ```bash
 git clone https://github.com/KailebBecker/Kaileb-Photography-.git && cd Kaileb-Photography-/server
 npm ci --omit=dev
-GOOGLE_CLIENT_ID='<client id>' GOOGLE_CLIENT_SECRET='<client secret>' node src/calendar-auth.js
+GOOGLE_CLIENT_ID='<client id>' GOOGLE_CLIENT_SECRET='<client secret>' node src/calendar-auth.js --calendar-id <the calendar's Gmail address>
 ```
+Use the account's full Gmail address as the calendar id. In the real test the nickname `primary` was rejected with
+`calendar_not_found` under this narrow scope, while the explicit address worked.
 It prints a Google sign-in link; open it, sign in as the calendar's owner, and choose *Advanced > continue* on
 the unverified-app screen. The consent text should say only "See your availability in all calendars you can
 access" or similar (busy/free, no details). The tool then prints a **refresh token** once and runs a test
@@ -577,10 +579,12 @@ CALENDAR_PROVIDER=google
 GOOGLE_CLIENT_ID=<client id>
 GOOGLE_CLIENT_SECRET=<client secret>
 GOOGLE_REFRESH_TOKEN=<refresh token from the authorise step>
-# GOOGLE_CALENDAR_ID=primary           (comma-separated list to include other calendars, e.g. primary,work@group.calendar.google.com)
+GOOGLE_CALENDAR_ID=<the calendar's Gmail address, e.g. kailebbecker.photos@gmail.com>
 ```
-The default `primary` is the account's main calendar only. Events on other calendars of the same account are
-*not* seen unless listed in `GOOGLE_CALENDAR_ID`.
+**Set `GOOGLE_CALENDAR_ID` to the account's Gmail address.** Do not rely on the default `primary`: with the narrow
+`calendar.freebusy` scope Google rejected it (`calendar_not_found`) in the real authorisation test. A
+comma-separated list includes other calendars as well (e.g. `owner@gmail.com,work@group.calendar.google.com`).
+Events on calendars that are not listed are *not* seen.
 
 Outbound access needed: `oauth2.googleapis.com` and `www.googleapis.com` on 443 (section 1).
 
