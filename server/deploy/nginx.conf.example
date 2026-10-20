@@ -1,9 +1,29 @@
 # nginx site for the inquiry API: TLS terminates here; Node listens on 127.0.0.1:8787 only.
-# Install (replace the placeholder everywhere; see server/README.md step 9):
+# Install (replace the placeholder everywhere; see server/README.md step 11):
 #   sed 's/__API_HOSTNAME__/api.example.com/g' deploy/nginx.conf.example | sudo tee /etc/nginx/sites-available/kaileb-inquiry
 # The certificate must exist first (certbot certonly ...), or `nginx -t` fails on the paths below.
-# Additive: a new server block for this hostname only; does not change other sites.
-# Works with Ubuntu's packaged nginx (1.18 / 1.24).
+# Additive: a new pair of server blocks for this hostname only; does not change other sites.
+# Works with Ubuntu's packaged nginx (1.18 / 1.24). This file is included inside nginx's http{} block,
+# so the zone/map definitions below are valid at the top level; names are prefixed kaileb_ to avoid clashes.
+#
+# Assumes nginx is the first thing the internet reaches (no ALB/CloudFront in front). If one is added,
+# $remote_addr would become the load balancer's address and every visitor would share one rate-limit
+# bucket: configure ngx_http_realip_module (set_real_ip_from <balancer range>; real_ip_header X-Forwarded-For)
+# before enabling this.
+
+# ---- Abuse limits (coarse flood guard; the app applies the precise per-IP and per-email limits) ----
+# 60 requests/minute/IP with a burst of 20 is far above a person filling in a form (preflight + submit +
+# retries), and above the app's own limit of 5 submissions per 10 minutes, so normal visitors always get
+# the app's friendly "try again later" and nginx only turns away floods before they reach Node.
+limit_req_zone  $binary_remote_addr zone=kaileb_inquiry_req:10m  rate=60r/m;
+limit_conn_zone $binary_remote_addr zone=kaileb_inquiry_conn:10m;
+
+# POST bodies must be declared JSON; anything else is refused here (415) and never reaches Node.
+map "$request_method:$content_type" $kaileb_bad_content_type {
+    default                             0;
+    "~*^POST:application/json(;.*)?$"   0;
+    "~^POST:"                           1;
+}
 
 server {
     listen 80;
@@ -11,13 +31,17 @@ server {
     server_name __API_HOSTNAME__;
     server_tokens off;
 
-    # Let's Encrypt HTTP-01 challenges (certbot --nginx adds its own handling; this covers --webroot).
+    access_log /var/log/nginx/kaileb-inquiry.access.log;
+    error_log  /var/log/nginx/kaileb-inquiry.error.log warn;
+
+    # Let's Encrypt HTTP-01 challenges only (used with `certbot --webroot`; certbot --nginx adds its own).
     location /.well-known/acme-challenge/ {
         root /var/www/html;
     }
 
+    # Redirect to the configured name, never to a client-supplied Host header.
     location / {
-        return 301 https://$host$request_uri;
+        return 301 https://__API_HOSTNAME__$request_uri;
     }
 }
 
@@ -27,25 +51,54 @@ server {
     server_name __API_HOSTNAME__;
     server_tokens off;
 
+    access_log /var/log/nginx/kaileb-inquiry.access.log;
+    error_log  /var/log/nginx/kaileb-inquiry.error.log warn;
+
     ssl_certificate     /etc/letsencrypt/live/__API_HOSTNAME__/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/__API_HOSTNAME__/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:kaileb_ssl:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
 
-    client_max_body_size 16k;          # the API itself also enforces a 16 KB body limit
+    # Request limits: the form is a few hundred bytes of JSON; the API also enforces 16 KB itself.
+    client_max_body_size 16k;
+    client_body_buffer_size 16k;
+    large_client_header_buffers 4 8k;
+    client_header_timeout 10s;
     client_body_timeout 10s;
-    add_header Strict-Transport-Security "max-age=31536000" always;
-    add_header X-Content-Type-Options nosniff always;
+    send_timeout 15s;
+    keepalive_timeout 30s;
 
-    # The only public endpoint. POST = submit, OPTIONS = CORS preflight (answered by the app,
-    # which applies the exact-origin allowlist).
+    # API responses are JSON, never documents: lock the browser behaviour down and keep it out of search.
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Content-Security-Policy "default-src 'none'; frame-ancestors 'none'" always;
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    # (No add_header may be added inside a location below: nginx would then drop all of the above there.)
+
+    # The only public endpoint. POST = submit, OPTIONS = CORS preflight (answered by the app, which
+    # applies the exact-origin allowlist). Any other method is refused by nginx.
     location = /api/inquiries {
         limit_except POST OPTIONS { deny all; }
+        if ($kaileb_bad_content_type) { return 415; }
+
+        limit_req  zone=kaileb_inquiry_req burst=20 nodelay;
+        limit_req_status 429;
+        limit_conn kaileb_inquiry_conn 20;
+        limit_conn_status 429;
+
         proxy_pass http://127.0.0.1:8787;
         proxy_http_version 1.1;
+        proxy_set_header Connection "";
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $remote_addr;   # overwrite, never append client-supplied values
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Forwarded "";                   # not used by the app; never pass a client-supplied one
+        proxy_set_header X-Real-IP "";
         proxy_connect_timeout 5s;
+        proxy_send_timeout 15s;
         proxy_read_timeout 20s;
     }
 
@@ -58,6 +111,12 @@ server {
         proxy_pass http://127.0.0.1:8787;
         proxy_set_header Host $host;
         proxy_set_header X-Forwarded-For $remote_addr;
+    }
+
+    # Dotfiles (.env, .git, ...) are never served. There is no document root at all in this block,
+    # so this is a second lock on a door that is already shut.
+    location ~ /\. {
+        return 404;
     }
 
     # Nothing else exists: no files, no database, no other app routes.

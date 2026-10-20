@@ -10,8 +10,12 @@ const ALLOWED_FIELDS = new Set(["name", "email", "phone", "sessionType", "prefer
 const EMAIL = /^[^\s@<>()[\]\\,;:"]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 const PHONE = /^[0-9+()\-.\s]+$/;
 const KEY = /^[A-Za-z0-9_-]{16,64}$/;
+// Text that can mislead or attack whoever reads it later (terminal, email client, future admin UI):
+// C0 controls (keeps \t \n \r), DEL + C1 controls (some terminals act on U+009B as an escape
+// introducer), bidi overrides/isolates and line/paragraph separators (visual spoofing), BOM.
+// Zero-width joiners are kept: emoji and several scripts need them.
 // eslint-disable-next-line no-control-regex
-const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g; // keeps \t \n \r
+const UNSAFE_TEXT = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200E\u200F\u2028\u2029\u202A-\u202E\u2066-\u2069\uFEFF]/g;
 
 function arizonaToday(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Phoenix", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
@@ -31,7 +35,7 @@ function isRealDate(iso) {
 }
 
 function clean(value, { multiline = false } = {}) {
-  let s = String(value).normalize("NFC").replace(CONTROL, "");
+  let s = String(value).normalize("NFC").replace(UNSAFE_TEXT, "");
   if (!multiline) s = s.replace(/[\r\n\t]+/g, " ");
   return s.trim();
 }
@@ -97,4 +101,4 @@ function validateInquiry(body, now = new Date()) {
   };
 }
 
-module.exports = { validateInquiry, SESSION_TYPES, LIMITS, arizonaToday };
+module.exports = { validateInquiry, SESSION_TYPES, LIMITS, UNSAFE_TEXT, arizonaToday };

@@ -16,10 +16,25 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
   const app = Fastify({
     logger, // default Fastify logging records method/url/status — never request bodies
     bodyLimit: BODY_LIMIT,
-    trustProxy: config.trustProxy,
+    // Honour X-Forwarded-For only from the local reverse proxy (nginx on loopback); a request that
+    // reaches Node from any other address cannot choose the IP used for rate limiting.
+    trustProxy: config.trustProxy ? ["127.0.0.1", "::1"] : false,
+    requestTimeout: 15_000, // whole request must arrive within 15 s (nginx already buffers it)
+    keepAliveTimeout: 10_000,
   });
 
+  // JSON only. Fastify also parses text/plain by default, which is the content type a hostile web page
+  // can POST cross-origin without a CORS preflight; with the parser removed it is refused outright (415).
+  app.removeContentTypeParser("text/plain");
+
   const allowed = new Set(config.allowedOrigins);
+  // Turnstile reports the hostname the widget ran on; it must be one of our website hostnames.
+  const allowedHostnames = new Set(config.allowedOrigins.map((o) => new URL(o).hostname.toLowerCase()));
+
+  // API responses are per-request and personal: never cacheable.
+  app.addHook("onSend", async (req, reply) => {
+    reply.header("Cache-Control", "no-store");
+  });
 
   // Exact-match CORS allowlist; no wildcard, no credentials/cookies are ever used.
   app.register(cors, {
@@ -55,7 +70,11 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
 
   app.setNotFoundHandler((req, reply) => reply.code(404).send({ ok: false, error: "not_found" }));
 
-  async function passesBotCheck(token, ip) {
+  // true = verified, false = visitor failed the check; throws when the check could not be performed
+  // (callers fail closed). The secret and the token are never logged or echoed. Cloudflare tokens are
+  // single-use and expire after 5 minutes, so a captured token cannot be replayed; the website also
+  // requests a fresh token after every attempt.
+  async function passesBotCheck(token, ip, log) {
     if (!config.turnstileSecret) return true; // bot check not configured (staging/dev)
     if (!token) return false;
     const res = await fetchImpl("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
@@ -64,8 +83,21 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
       body: new URLSearchParams({ secret: config.turnstileSecret, response: token, remoteip: ip || "" }),
       signal: AbortSignal.timeout(5000),
     });
+    if (!res.ok) throw new Error(`turnstile http ${res.status}`);
     const data = await res.json();
-    return data && data.success === true;
+    if (!data || typeof data !== "object") throw new Error("turnstile bad response");
+    if (data.success === true) {
+      const host = typeof data.hostname === "string" ? data.hostname.toLowerCase() : "";
+      if (allowedHostnames.has(host)) return true;
+      log.warn("bot check passed for a hostname that is not in ALLOWED_ORIGINS"); // widget/site-key hostname misconfiguration
+      return false;
+    }
+    // Provider error codes are short fixed strings (e.g. invalid-input-secret = wrong TURNSTILE_SECRET,
+    // timeout-or-duplicate = reused token). Logging them lets the administrator diagnose a misconfiguration.
+    const codes = (Array.isArray(data["error-codes"]) ? data["error-codes"] : []).filter((c) => typeof c === "string" && /^[a-z0-9-]{1,40}$/.test(c));
+    if (codes.includes("internal-error")) throw new Error("turnstile internal error"); // provider-side: retryable, not the visitor's fault
+    log.warn({ turnstileErrors: codes }, "bot check rejected");
+    return false;
   }
 
   // Routes are registered inside a plugin so they are defined AFTER cors/rate-limit have
@@ -83,7 +115,7 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
 
         let botOk;
         try {
-          botOk = await passesBotCheck(result.turnstileToken, req.ip);
+          botOk = await passesBotCheck(result.turnstileToken, req.ip, req.log);
         } catch (err) {
           req.log.warn("bot check unavailable");
           return reply.code(503).send({ ok: false, error: "bot_check_unavailable" }); // fail closed

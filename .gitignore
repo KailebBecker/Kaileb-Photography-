@@ -11,3 +11,20 @@ server/data/
 server/backups/
 server/.env
 server/.env.*
+# Secrets and runtime state must never be committed (production lives only on the server).
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+*.jsonl

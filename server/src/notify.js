@@ -1,12 +1,13 @@
 "use strict";
 const fs = require("fs");
+const { UNSAFE_TEXT } = require("./validate");
 
 // Owner notification via a mature transactional-email API (Resend) — never a
 // homemade mail server, and credentials never leave the server. Plain-text only
 // (no HTML), so inquiry content can't inject markup into the owner's inbox.
 
-// eslint-disable-next-line no-control-regex
-const CONTROL = /[\u0000-\u001F\u007F]/g;
+// One-line fields (subject, name, ...): all of C0 plus everything validation strips.
+const CONTROL = new RegExp(`[\\u0000-\\u001F]|${UNSAFE_TEXT.source}`, "g");
 const oneLine = (s, max) => String(s).replace(CONTROL, " ").replace(/\s+/g, " ").trim().slice(0, max);
 
 function buildEmail(inq) {

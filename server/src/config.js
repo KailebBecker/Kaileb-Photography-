@@ -2,6 +2,8 @@
 // Environment-driven configuration. Secrets only ever come from the environment
 // (systemd EnvironmentFile on the server) — never from files in this repo.
 
+const path = require("path");
+
 function list(value) {
   return (value || "")
     .split(",")
@@ -39,6 +41,12 @@ function loadConfig(env = process.env) {
 }
 
 const LOOPBACK = new Set(["127.0.0.1", "::1", "localhost"]);
+const REPO_ROOT = path.resolve(__dirname, "..", ".."); // the code checkout that updates replace
+
+function isInside(file, dir) {
+  const rel = path.relative(dir, path.resolve(file));
+  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+}
 
 function isBareOrigin(o) {
   try {
@@ -56,8 +64,11 @@ function assertProductionReady(config) {
   if (config.allowedOrigins.some((o) => o === "*" || !/^https:\/\//.test(o))) problems.push("ALLOWED_ORIGINS must be exact https:// origins (no wildcard)");
   // A browser's Origin header never has a path, so "https://user.github.io/repo/" would silently never match.
   if (config.allowedOrigins.some((o) => !isBareOrigin(o))) problems.push("ALLOWED_ORIGINS entries must be scheme + host only (no path), e.g. https://kailebbecker.github.io");
-  // Trusting X-Forwarded-For is only safe when nothing but the local reverse proxy can reach the port.
-  if (config.trustProxy && !LOOPBACK.has(config.host)) problems.push("TRUST_PROXY=true requires HOST to be a loopback address (127.0.0.1) behind the local reverse proxy");
+  // Only the local reverse proxy may reach Node (this also keeps X-Forwarded-For trustworthy).
+  if (!LOOPBACK.has(config.host)) problems.push("HOST must be a loopback address (127.0.0.1): nginx on the same server is the only public entry point");
+  if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) problems.push("PORT must be a valid port number");
+  // Updates replace the code checkout; the database must live elsewhere so they can never touch it.
+  if (!path.isAbsolute(config.dbPath) || isInside(config.dbPath, REPO_ROOT)) problems.push("DB_PATH must be an absolute path outside the code checkout, e.g. /var/lib/kaileb-inquiry/inquiries.db");
   if (config.notify.provider === "dev") problems.push("NOTIFY_PROVIDER=dev is not allowed in production");
   if (config.notify.provider === "resend" && !(config.notify.resendApiKey && config.notify.to && config.notify.from)) {
     problems.push("NOTIFY_PROVIDER=resend needs RESEND_API_KEY, NOTIFY_TO and NOTIFY_FROM");

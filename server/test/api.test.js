@@ -258,14 +258,14 @@ test("CORS: allowed origin gets headers; other origins are blocked; no-origin cl
 });
 
 test("Turnstile (when configured): missing/failed tokens rejected, valid accepted, outage fails closed", async () => {
-  let verdict = { success: true };
+  let verdict = { success: true, hostname: "kailebbecker.github.io" };
   let down = false;
-  const fetchImpl = async () => { if (down) throw new Error("net"); return { json: async () => verdict }; };
+  const fetchImpl = async () => { if (down) throw new Error("net"); return { ok: true, json: async () => verdict }; };
   const t = setup({ env: { TURNSTILE_SECRET: "secret", RATE_LIMIT_MAX: "100" }, fetchImpl });
   assert.equal((await t.post(payload())).statusCode, 400); // no token
   verdict = { success: false };
   assert.equal((await t.post(payload({ turnstileToken: "bad" }))).statusCode, 400);
-  verdict = { success: true };
+  verdict = { success: true, hostname: "kailebbecker.github.io" };
   assert.equal((await t.post(payload({ turnstileToken: "good" }))).statusCode, 201);
   down = true;
   assert.equal((await t.post(payload({ turnstileToken: "good" }))).statusCode, 503);
@@ -327,7 +327,8 @@ test("data survives a restart (durable file database)", async () => {
 });
 
 test("production config refuses wildcard/http origins and the dev notifier", () => {
-  const bad = (env) => assert.throws(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ...env })));
+  const DB = { DB_PATH: "/var/lib/kaileb-inquiry/inquiries.db" };
+  const bad = (env) => assert.throws(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ...DB, ...env })));
   bad({});
   bad({ ALLOWED_ORIGINS: "*" });
   bad({ ALLOWED_ORIGINS: "http://example.com" });
@@ -335,7 +336,11 @@ test("production config refuses wildcard/http origins and the dev notifier", () 
   bad({ ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "resend" });
   bad({ ALLOWED_ORIGINS: "https://kailebbecker.github.io/Kaileb-Photography-/" }); // a page URL, not an origin
   bad({ ALLOWED_ORIGINS: "https://a.example", TRUST_PROXY: "true", HOST: "0.0.0.0" }); // spoofable client IP
-  assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "resend", RESEND_API_KEY: "k", NOTIFY_TO: "o@e.co", NOTIFY_FROM: "f@e.co" })));
+  bad({ ALLOWED_ORIGINS: "https://a.example", HOST: "0.0.0.0" }); // Node must not be publicly reachable
+  bad({ ALLOWED_ORIGINS: "https://a.example", PORT: "abc" });
+  bad({ ALLOWED_ORIGINS: "https://a.example", DB_PATH: "./data/inquiries.db" }); // relative, inside the checkout
+  bad({ ALLOWED_ORIGINS: "https://a.example", DB_PATH: require("path").join(__dirname, "..", "data", "x.db") }); // inside the checkout
+  assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ...DB, ALLOWED_ORIGINS: "https://a.example", NOTIFY_PROVIDER: "resend", RESEND_API_KEY: "k", NOTIFY_TO: "o@e.co", NOTIFY_FROM: "f@e.co" })));
   // Interim deployment before the Resend key exists: stores inquiries, emails nobody.
-  assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ALLOWED_ORIGINS: "https://a.example/,https://b.example", TRUST_PROXY: "true", NOTIFY_PROVIDER: "none" })));
+  assert.doesNotThrow(() => assertProductionReady(loadConfig({ NODE_ENV: "production", ...DB, ALLOWED_ORIGINS: "https://a.example/,https://b.example", TRUST_PROXY: "true", NOTIFY_PROVIDER: "none" })));
 });

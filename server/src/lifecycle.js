@@ -5,6 +5,8 @@
 // call into it. Invented business defaults are deliberately absent: confirming a session
 // requires the owner to state the date, start time and length explicitly.
 
+const { UNSAFE_TEXT } = require("./validate");
+
 const TRANSITIONS = {
   new: ["accepted", "declined", "cancelled", "spam"],
   accepted: ["confirmed", "declined", "cancelled"],
@@ -53,7 +55,7 @@ function createLifecycle({ db, now = () => new Date() }) {
   const events = db.prepare("SELECT at, from_status, to_status, note FROM inquiry_events WHERE inquiry_id = ? ORDER BY id");
   const del = db.prepare("DELETE FROM inquiries WHERE id = ?");
 
-  const clean = (note) => (note ? String(note).replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, "").trim().slice(0, 1000) || null : null); // eslint-disable-line no-control-regex
+  const clean = (note) => (note ? String(note).replace(UNSAFE_TEXT, "").trim().slice(0, 1000) || null : null); // eslint-disable-line no-control-regex
 
   /** Moves an inquiry to a new status inside one transaction. Throws LifecycleError on a bad move. */
   function transition(id, to, { note, session } = {}) {

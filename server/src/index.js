@@ -29,6 +29,7 @@ async function main() {
 
   await app.listen({ host: config.host, port: config.port });
   service.retryPending().catch(() => {}); // pick up anything left over from before a restart
+  if (config.production && !config.turnstileSecret) app.log.warn("TURNSTILE_SECRET not set: bot check is OFF (rate limits and honeypot still apply)");
   if (config.notify.provider === "none") app.log.warn("NOTIFY_PROVIDER=none: inquiries are stored but the owner is NOT emailed");
 }
 
