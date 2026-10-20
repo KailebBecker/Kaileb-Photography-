@@ -24,14 +24,17 @@ const unitValue = (text, key) => (text.match(new RegExp(`^${key}=(.*)$`, "m")) |
 test("env.example contains no secrets and starts in production as shipped", () => {
   assert.equal(env.RESEND_API_KEY, "");
   assert.equal(env.TURNSTILE_SECRET, "");
+  for (const k of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"]) assert.equal(env[k], "", k);
+  assert.equal(env.CALENDAR_PROVIDER, "none"); // the calendar is opt-in
   assert.equal(env.NODE_ENV, "production");
   assert.doesNotThrow(() => assertProductionReady(loadConfig(env)));
 });
 
 test("every environment variable the code reads is documented, and nothing undocumented is templated", () => {
   const used = new Set();
-  for (const f of fs.readdirSync(path.join(root, "src"))) {
-    for (const m of read(`src/${f}`).matchAll(/\benv\.([A-Z][A-Z_]+)/g)) used.add(m[1]);
+  const walk = (dir) => fs.readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`) : [`${dir}/${e.name}`]));
+  for (const f of walk("src")) {
+    for (const m of read(f).matchAll(/\benv\.([A-Z][A-Z_]+)/g)) used.add(m[1]);
   }
   const readme = read("README.md");
   for (const name of used) assert.ok(readme.includes("`" + name + "`"), `${name} missing from README env table`);
@@ -86,9 +89,10 @@ test("nginx template enforces method, content-type, size, rate and exposure limi
   // add_header inside a location would silently drop the server-level security headers there.
   const locations = publicBlock.slice(publicBlock.indexOf("location"));
   assert.doesNotMatch(locations, /add_header/);
-  // Only the inquiry endpoint is proxied publicly; /health is loopback-only.
+  // Exactly two public endpoints (submit = POST, availability = GET), each limited to its own methods; /health is loopback-only.
+  assert.match(publicBlock, /location = \/api\/availability \{\s*limit_except GET OPTIONS \{ deny all; \}[^}]*limit_req\s+zone=kaileb_inquiry_req/);
   assert.match(publicBlock, /location = \/health \{\s*allow 127\.0\.0\.1;\s*allow ::1;\s*deny all;/);
-  assert.equal((publicBlock.match(/proxy_pass/g) || []).length, 2);
+  assert.equal((publicBlock.match(/proxy_pass/g) || []).length, 3);
 });
 
 test(".gitignore keeps secrets, certificates and databases out of Git", () => {

@@ -54,7 +54,7 @@ Placeholders used below — replace them, nothing else is server-specific:
 | Inbound | 80/tcp | Internet | redirect to HTTPS + Let's Encrypt HTTP-01 issue/renewal |
 | Inbound | 22/tcp | administrator's choice | SSH policy is the administrator's responsibility |
 | Inbound | **8787** | **nobody** | the app binds `127.0.0.1` only; do not open it in the security group/firewall |
-| Outbound | 443/tcp | server | `api.resend.com` (email), `challenges.cloudflare.com` (only if Turnstile is enabled), npm registry + GitHub (installs/updates), Let's Encrypt |
+| Outbound | 443/tcp | server | `api.resend.com` (email), `challenges.cloudflare.com` (only if Turnstile is enabled), `oauth2.googleapis.com` + `www.googleapis.com` (only if the Google Calendar connection is enabled, section 10), npm registry + GitHub (installs/updates), Let's Encrypt |
 
 SQLite is a file, never a network service. Nothing listens for it.
 If you use ufw: `sudo ufw allow 'Nginx Full'` (80+443) plus your SSH rule; do not add 8787.
@@ -129,7 +129,7 @@ sudo systemctl enable --now kaileb-inquiry-backup.timer
 
 # 10. Database: created and migrated automatically on first start. Verify:
 systemctl is-active kaileb-inquiry                   # active
-curl -s http://127.0.0.1:8787/health; echo           # {"ok":true,"notifyBacklog":0}
+curl -s http://127.0.0.1:8787/health; echo           # {"ok":true,"notifyBacklog":0,"calendar":"off"}
 kaileb-inquiries list                                # No inquiries.
 sudo ls -l /var/lib/kaileb-inquiry                   # inquiries.db owned by kaileb-inquiry, -rw-------
 #   If it is not active: sudo journalctl -u kaileb-inquiry -n 30 --no-pager
@@ -188,6 +188,10 @@ values and logs why.
 | `NOTIFY_TO` | with `resend` | `<OWNER_EMAIL>` |
 | `NOTIFY_FROM` | with `resend` | `Kaileb Photography <onboarding@resend.dev>` until a domain is verified in Resend |
 | `TURNSTILE_SECRET` | optional | empty = bot check off (section 5) |
+| `CALENDAR_PROVIDER` | optional | `none` (default) or `google` (section 10). With `google` the calendar is required: if it can't be verified, every date shows unavailable |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | with `google` | secrets, server only; the refresh token comes from `node src/calendar-auth.js` |
+| `GOOGLE_CALENDAR_ID` | optional | default `primary`; comma-separated list to include other calendars |
+| `CALENDAR_MAX_STALE_MINUTES` | optional | default 60 (minimum 15): how old the last good calendar sync may be before dates show as unverified |
 | `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS` | optional | default 5 submissions per IP per 10 minutes |
 | `PER_EMAIL_DAILY_CAP` | optional | default 5 inquiries per email address per day |
 | `BACKUP_DIR` | backup only | set inside `kaileb-inquiry-backup.service`, not in the env file |
@@ -259,7 +263,7 @@ ORIGIN=https://kailebbecker.github.io
 systemctl is-active kaileb-inquiry && systemctl is-enabled kaileb-inquiry          # active / enabled
 
 # 2. Local health (app + database)
-curl -s http://127.0.0.1:8787/health; echo                                           # {"ok":true,"notifyBacklog":0}
+curl -s http://127.0.0.1:8787/health; echo                                           # {"ok":true,"notifyBacklog":0,"calendar":"off"}
 
 # 3. HTTPS through nginx (on the server), and the public boundary (from any other machine)
 curl -s --resolve "$API_HOST:443:127.0.0.1" "https://$API_HOST/health"; echo        # {"ok":true,...}
@@ -359,7 +363,7 @@ sudo -u nobody ls /var/lib/kaileb-inquiry /var/backups/kaileb-inquiry           
 
 # 7. Health endpoint is not public (from outside), but works from the server
 curl -s -o /dev/null -w '%{http_code}\n' "https://$API_HOST/health"                # expect 403
-curl -s --resolve "$API_HOST:443:127.0.0.1" "https://$API_HOST/health"; echo        # on the server: expect {"ok":true,"notifyBacklog":0}
+curl -s --resolve "$API_HOST:443:127.0.0.1" "https://$API_HOST/health"; echo        # on the server: expect {"ok":true,"notifyBacklog":0,"calendar":"off"}
 curl -s -m 5 -o /dev/null -w '%{http_code}\n' "http://$API_HOST:8787/health"        # from outside: expect 000 (no connection)
 
 # 8. No sensitive file or internal route is retrievable (expect 404 for every line, never 200)
@@ -369,6 +373,8 @@ for p in / /.env /.git/config /inquiries.db /inquiries.db-wal /data/inquiries.db
 # 9. Method, content-type and size limits (nginx)
 curl -s -o /dev/null -w '%{http_code}\n' "$API"                                                          # GET: expect 403
 curl -s -o /dev/null -w '%{http_code}\n' -X PUT "$API" -H 'Content-Type: application/json' -d '{}'       # expect 403
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://$API_HOST/api/availability" -H 'Content-Type: application/json' -d '{}'   # expect 403 (read-only endpoint)
+curl -s "https://$API_HOST/api/availability?month=$(date +%Y-%m)" | head -c 300; echo   # expect {"ok":true,...,"verified":true|false,"days":[{"date":...,"available":...}...]} and nothing else
 curl -s -o /dev/null -w '%{http_code}\n' -X POST "$API" -H "Origin: $ORIGIN" -H 'Content-Type: text/plain' -d '{}'   # expect 415
 head -c 20000 /dev/zero | tr '\0' x | curl -s -o /dev/null -w '%{http_code}\n' -X POST "$API" -H 'Content-Type: application/json' --data-binary @-   # expect 413
 
@@ -488,16 +494,117 @@ columns). Restore the pre-update backup (section 7) only if a release damaged da
   kaileb-inquiries list [--status new,accepted] [--all]
   kaileb-inquiries show <id>
   kaileb-inquiries accept|decline|cancel|complete|spam <id> [--note "text"]
-  kaileb-inquiries confirm <id> --date YYYY-MM-DD --start HH:MM --minutes N [--note "text"]   # refuses overlaps
+  kaileb-inquiries confirm <id> --date YYYY-MM-DD --start HH:MM --minutes N [--note "text"] [--ignore-calendar]
+        # refuses overlaps with other confirmed sessions, manual blocks and Google Calendar busy time;
+        # refuses if the connected calendar can't be verified unless you add --ignore-calendar (recorded in the history)
   kaileb-inquiries note <id> "text"
   kaileb-inquiries delete <id> --yes
   kaileb-inquiries purge --days N --status declined,cancelled,spam [--yes]                   # dry run without --yes
   ```
+  Availability (what customers can request; full explanation in section 10):
+  ```
+  kaileb-inquiries block add --date 2026-12-24 [--label "Family trip"]    # also --dates D1,D2  or  --from D --to D
+  kaileb-inquiries block add --from 2026-12-26 --to 2026-12-28 --start 09:00 --end 12:00   # only those hours each day
+  kaileb-inquiries block list [--all]        kaileb-inquiries block remove <id>
+  kaileb-inquiries availability check 2026-12-24      # available or not, and why (owner only)
+  kaileb-inquiries availability month 2026-12
+  kaileb-inquiries rules show                         # weekly hours customers can request (placeholders until set)
+  kaileb-inquiries rules set mon-fri 17:30-24:00      # or e.g. rules set sat,sun 09:00-18:00  /  rules set sun closed
+  kaileb-inquiries setting set buffer_minutes 60      # also min_session_minutes, lead_days;  setting show
+  kaileb-inquiries calendar status                    # Google connection state;  calendar clear --yes forgets the cached busy time
+  ```
+  The service upgrades the database when it starts, so restart it once after an update (section 8) before using
+  these commands.
   These do not email the client. Always use this wrapper (or `sudo -u kaileb-inquiry`), never run the
   CLI or `node` against the database as root: SQLite would create root-owned files the service can't open.
 - Config change: edit `/etc/kaileb-inquiry/env`, `sudo systemctl restart kaileb-inquiry`, check the journal.
 - Restart policy: systemd restarts the app 5 s after a crash and starts it at boot. A bad config makes it
   exit at start-up with the reason in the journal.
+
+## 10. Availability and the Google Calendar connection (optional)
+
+The API can answer "is this date available?" for the website (`GET /api/availability`, section API reference).
+A date is available only if, inside the owner's weekly hours, enough free time remains after removing the
+**union** of: the owner's manual blocks, confirmed sessions (plus a buffer) and, when connected, busy time in
+the owner's Google Calendar. This works with the calendar switched off (`CALENDAR_PROVIDER=none`, the
+default); the calendar is an add-on that is turned on only once it has been authorised and checked.
+
+**What Google data is touched.** One Google API call is used: the free/busy query, with the single scope
+`https://www.googleapis.com/auth/calendar.freebusy` ("see your availability"). It returns only *when* the
+calendar is busy. The app never requests event lists, titles, descriptions, attendees, locations or the
+account's profile, and the code discards everything except each busy range's start and end. Only merged busy
+time ranges (UTC timestamps) and a small status row are stored in the database, so they appear in backups too;
+no event details exist anywhere in the system. The website receives only per-date yes/no answers.
+
+**If Google cannot be checked.** Once `CALENDAR_PROVIDER=google` is set the calendar is *required*. Busy time
+is refreshed every 15 minutes (3 minutes after a transient failure). If the last good refresh is older than
+`CALENDAR_MAX_STALE_MINUTES` (default 60), or access was revoked/misconfigured (immediately), the public answer
+for every date becomes `available:false` with `verified:false`, the website must not say a date is available,
+and the owner CLI refuses to confirm sessions unless the owner adds `--ignore-calendar` on purpose. Inquiry
+submissions are never blocked by this: the contact form keeps working.
+
+### One-time Google setup (the calendar owner does this; no password is ever shared)
+1. Go to <https://console.cloud.google.com/> signed in as the Gmail account that owns the calendar. Create a
+   project (for example "Kaileb Photography Availability").
+2. *APIs & Services > Library*: search "Google Calendar API" and click **Enable**.
+3. *Google Auth Platform* (older name: *OAuth consent screen*) > **Get started / Configure**: app name (anything),
+   support email and contact email = the owner's; **Audience: External**.
+4. *Data access / Scopes* > **Add or remove scopes** > add exactly
+   `https://www.googleapis.com/auth/calendar.freebusy`. No other scope.
+5. *Audience*: **Publish app** (status must be **In production**). If it is left in *Testing*, Google expires
+   the connection every 7 days. Google will show an "unverified app" warning during sign-in because this is a
+   private app for one person; that is expected, and verification is not needed for personal use.
+   [verify the labels in the current console; Google renames these screens]
+6. *Clients* > **Create client** > application type **Desktop app** > Create. Copy the **Client ID** and
+   **Client secret**. (Keep them out of Git, chat and email.)
+
+### Authorise (on a computer with a web browser, once)
+```bash
+git clone https://github.com/KailebBecker/Kaileb-Photography-.git && cd Kaileb-Photography-/server
+npm ci --omit=dev
+GOOGLE_CLIENT_ID='<client id>' GOOGLE_CLIENT_SECRET='<client secret>' node src/calendar-auth.js
+```
+It prints a Google sign-in link; open it, sign in as the calendar's owner, and choose *Advanced > continue* on
+the unverified-app screen. The consent text should say only "See your availability in all calendars you can
+access" or similar (busy/free, no details). The tool then prints a **refresh token** once and runs a test
+free/busy request. It refuses the connection if Google grants any broader scope. To run it on a remote server
+instead, use `--port 53682` and forward that port over SSH (`ssh -L 53682:127.0.0.1:53682 ...`).
+
+### Turn it on (server)
+Add these to `/etc/kaileb-inquiry/env` (mode 0600, server only), then `sudo systemctl restart kaileb-inquiry`:
+```
+CALENDAR_PROVIDER=google
+GOOGLE_CLIENT_ID=<client id>
+GOOGLE_CLIENT_SECRET=<client secret>
+GOOGLE_REFRESH_TOKEN=<refresh token from the authorise step>
+# GOOGLE_CALENDAR_ID=primary           (comma-separated list to include other calendars, e.g. primary,work@group.calendar.google.com)
+```
+The default `primary` is the account's main calendar only. Events on other calendars of the same account are
+*not* seen unless listed in `GOOGLE_CALENDAR_ID`.
+
+Outbound access needed: `oauth2.googleapis.com` and `www.googleapis.com` on 443 (section 1).
+
+### Verify the connection (on the server)
+```bash
+sudo journalctl -u kaileb-inquiry -n 20 --no-pager | grep -i calendar    # expect "calendar synced"
+kaileb-inquiries calendar status        # expect: google -> VERIFIED, recent last successful sync
+curl -s http://127.0.0.1:8787/health; echo   # expect "calendar":"ok"
+```
+Then, with the owner: create a test event in the Google Calendar for a day about two weeks out, marked
+**Busy**, restart the service to sync immediately (or wait up to 15 minutes), and run
+`kaileb-inquiries availability check <that date>`; it should report `unavailable (busy)`. Delete the event and
+check again after the next sync. Events marked *Free* (available) do not block; check how all-day events,
+tentative events and declined invitations behave on the owner's own calendar before relying on them [verify].
+Finally test the safety net: revoke the app at <https://myaccount.google.com/permissions> (or temporarily blank
+`GOOGLE_REFRESH_TOKEN` and restart), wait for the next sync, and confirm `calendar status` says NOT VERIFIED,
+`curl 'https://API_HOST/api/availability?month=<YYYY-MM>'` shows `"verified":false` with every date
+`"available":false`, and that the contact form still accepts inquiries. Restore the token afterwards.
+
+### Disconnecting or replacing the connection
+Remove the app at <https://myaccount.google.com/permissions>, set `CALENDAR_PROVIDER=none` (or replace the
+three secrets), restart the service, and run `kaileb-inquiries calendar clear --yes` to delete the cached busy
+time. If Google reports the grant is no longer valid (`auth_revoked`), repeat "Authorise" and replace
+`GOOGLE_REFRESH_TOKEN`.
 
 ## API reference
 
@@ -506,7 +613,13 @@ columns). Restore the pre-update backup (section 7) only if a release damaged da
   `403` origin not allowed · `413/415` · `429` rate limit · `500/503` NOT stored (the website never claims success).
 - Success is returned only after the row is committed. The owner email is sent afterwards, asynchronously.
 
-`GET /health` → `{ok:true,notifyBacklog:N}`; server-local only.
+`GET /api/availability?month=YYYY-MM` or `?date=YYYY-MM-DD` (current month to six months ahead; exactly one parameter)
+- `200 {ok:true,month,verified,days:[{date,available}]}` or `{ok:true,verified,date,available}`. Nothing else: no reasons, times, sources or counts.
+- `verified:false` means a required external calendar could not be checked: every `available` is then `false` and the website must show a neutral
+  "can't check availability right now" message, never "available". Verified answers may be cached 60 seconds; unverified ones are `no-store`.
+- `400` bad or unexpected parameters · `403` origin not allowed · `429` rate limit (60 per 10 minutes per visitor).
+
+`GET /health` → `{ok:true,notifyBacklog:N,calendar:"off"|"ok"|"unverified:<code>"}`; server-local only.
 
 ---
 

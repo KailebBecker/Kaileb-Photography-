@@ -4,6 +4,9 @@ const { openDatabase } = require("./db");
 const { createNotifier } = require("./notify");
 const { createService } = require("./service");
 const { buildApp } = require("./app");
+const { createAvailability } = require("./availability/engine");
+const { createSource } = require("./availability/google");
+const { createCalendarSync } = require("./availability/sync");
 
 async function main() {
   const config = loadConfig();
@@ -11,7 +14,20 @@ async function main() {
 
   const db = openDatabase(config.dbPath);
   const service = createService({ db, notifier: createNotifier(config), perEmailDailyCap: config.perEmailDailyCap });
-  const app = buildApp({ config, service });
+  const availability = createAvailability({ db, config });
+  availability.recordConfiguration();
+  const app = buildApp({ config, service, availability });
+
+  // External calendar (Google free/busy): refresh the busy cache now and every 15 minutes. A failing
+  // source turns public availability "unverified" (see availability/engine.js); it never takes the inquiry form down.
+  const source = createSource(config);
+  let stopCalendarSync = () => {};
+  if (source) {
+    const g = config.calendar.google;
+    if (!(g.clientId && g.clientSecret && g.refreshToken)) app.log.warn("CALENDAR_PROVIDER=google but GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GOOGLE_REFRESH_TOKEN are not all set: availability will report 'unverified'");
+    const sync = createCalendarSync({ db, source });
+    stopCalendarSync = sync.start({ onResult: (r) => (r.ok ? app.log.info({ intervals: r.count }, "calendar synced") : app.log.warn({ code: r.code }, "calendar sync failed")) });
+  }
 
   // Retry unsent owner notifications (e.g. provider outage, or key added later).
   const sweeper = setInterval(() => service.retryPending().catch((e) => app.log.error({ err: { message: e.message } }, "retry sweep failed")), 5 * 60 * 1000);
@@ -20,6 +36,7 @@ async function main() {
   const shutdown = async (signal) => {
     app.log.info({ signal }, "shutting down");
     clearInterval(sweeper);
+    stopCalendarSync();
     await app.close();
     db.close();
     process.exit(0);

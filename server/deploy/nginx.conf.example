@@ -102,6 +102,29 @@ server {
         proxy_read_timeout 20s;
     }
 
+    # Public availability (read-only): GET returns { date, available } entries and one verified flag,
+    # never calendar details. Same limits and the same single upstream as above.
+    location = /api/availability {
+        limit_except GET OPTIONS { deny all; }
+
+        limit_req  zone=kaileb_inquiry_req burst=20 nodelay;
+        limit_req_status 429;
+        limit_conn kaileb_inquiry_conn 20;
+        limit_conn_status 429;
+
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Forwarded "";
+        proxy_set_header X-Real-IP "";
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 15s;
+        proxy_read_timeout 20s;
+    }
+
     # Health/backlog is for the server itself only (verifies TLS + nginx + app end to end):
     #   curl --resolve __API_HOSTNAME__:443:127.0.0.1 https://__API_HOSTNAME__/health
     location = /health {

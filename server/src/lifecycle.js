@@ -45,7 +45,7 @@ function parseSession({ date, start, minutes }) {
   return { date, startMin, minutes: len };
 }
 
-function createLifecycle({ db, now = () => new Date() }) {
+function createLifecycle({ db, now = () => new Date(), availability = null }) {
   const get = db.prepare("SELECT * FROM inquiries WHERE id = ?");
   const setStatus = db.prepare("UPDATE inquiries SET status = ?, updated_at = ? WHERE id = ?");
   const setSession = db.prepare("UPDATE inquiries SET status = 'confirmed', updated_at = ?, session_date = ?, session_start_min = ?, session_minutes = ? WHERE id = ?");
@@ -58,7 +58,7 @@ function createLifecycle({ db, now = () => new Date() }) {
   const clean = (note) => (note ? String(note).replace(UNSAFE_TEXT, "").trim().slice(0, 1000) || null : null); // eslint-disable-line no-control-regex
 
   /** Moves an inquiry to a new status inside one transaction. Throws LifecycleError on a bad move. */
-  function transition(id, to, { note, session } = {}) {
+  function transition(id, to, { note, session, ignoreExternal = false } = {}) {
     return db.transaction(() => {
       const row = get.get(String(id).toUpperCase());
       if (!row) throw new LifecycleError("not_found", "No such inquiry.");
@@ -75,7 +75,11 @@ function createLifecycle({ db, now = () => new Date() }) {
             throw new LifecycleError("conflict", `Overlaps confirmed session ${other.id} on ${s.date}.`);
           }
         }
+        // Manual blocks and (when configured) the external calendar. Runs in this transaction against the
+        // cached busy intervals; fails safe when a required calendar can't be verified.
+        if (availability) availability.assertSessionFree(s, { ignoreExternal });
         setSession.run(at, s.date, s.startMin, s.minutes, row.id);
+        if (ignoreExternal && availability && availability.externalStatus().required) note = [note, "Confirmed with --ignore-calendar (external calendar check skipped by the owner)."].filter(Boolean).join(" ");
       } else {
         setStatus.run(to, at, row.id);
         if (to === "cancelled") clearSession.run(row.id); // frees the slot

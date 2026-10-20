@@ -460,7 +460,7 @@ test("a correctly configured production process starts on loopback, serves healt
         await new Promise((r) => setTimeout(r, 100));
       }
     }
-    assert.deepEqual(health, { ok: true, notifyBacklog: 0 });
+    assert.deepEqual(health, { ok: true, notifyBacklog: 0, calendar: "off" });
     // Hostile request against the real process: origin check + generic error, no secrets in output.
     const bad = await fetch(`http://127.0.0.1:${port}/api/inquiries`, { method: "POST", headers: { "content-type": "application/json", origin: "https://evil.example" }, body: "{}" });
     assert.equal(bad.status, 403);

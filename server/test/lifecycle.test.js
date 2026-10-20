@@ -123,7 +123,7 @@ test("purge: explicit args required, dry-run by default, never touches accepted/
   assert.deepEqual(t.db.prepare("SELECT status FROM inquiries ORDER BY status").all().map((r) => r.status), ["accepted", "confirmed"]);
 });
 
-test("migration 2 upgrades an existing v1 database without losing inquiries", async () => {
+test("migrations upgrade an existing v1 database without losing inquiries", async () => {
   const fs = require("fs"), os = require("os"), path = require("path");
   const Database = require("better-sqlite3");
   const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "mig-")), "old.db");
@@ -137,7 +137,7 @@ test("migration 2 upgrades an existing v1 database without losing inquiries", as
   const db = openDatabase(file);
   assert.equal(db.prepare("SELECT name FROM inquiries").get().name, "Old");
   assert.ok(db.prepare("PRAGMA table_info(inquiries)").all().some((c) => c.name === "session_date"));
-  assert.equal(db.prepare("SELECT MAX(version) v FROM schema_migrations").get().v, 2);
+  assert.equal(db.prepare("SELECT MAX(version) v FROM schema_migrations").get().v, 3);
   db.close();
 });
 

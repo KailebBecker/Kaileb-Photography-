@@ -3,6 +3,7 @@ const { loadConfig } = require("../src/config");
 const { openDatabase } = require("../src/db");
 const { createService } = require("../src/service");
 const { buildApp } = require("../src/app");
+const { createAvailability } = require("../src/availability/engine");
 
 const NOW = new Date("2026-10-14T18:00:00Z");
 const ORIGIN = "https://kailebbecker.github.io";
@@ -39,10 +40,11 @@ function setup({ env = {}, notifier, fetchImpl, db } = {}) {
   const service = createService({ db: database, notifier: fakeNotifier, now: () => NOW, perEmailDailyCap: config.perEmailDailyCap });
   const logs = [];
   const stream = { write: (line) => logs.push(line) };
-  const app = buildApp({ config, service, fetchImpl, now: () => NOW, logger: { level: "info", stream } });
+  const availability = createAvailability({ db: database, config, now: () => NOW });
+  const app = buildApp({ config, service, availability, fetchImpl, now: () => NOW, logger: { level: "info", stream } });
   const post = (body, headers = {}) =>
     app.inject({ method: "POST", url: "/api/inquiries", headers: { "content-type": "application/json", origin: ORIGIN, ...headers }, payload: typeof body === "string" ? body : JSON.stringify(body) });
-  return { app, db: database, service, sent, logs, post, config };
+  return { app, db: database, service, availability, sent, logs, post, config };
 }
 
 module.exports = { setup, payload, ORIGIN, NOW, key };

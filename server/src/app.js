@@ -3,8 +3,9 @@ const Fastify = require("fastify");
 const cors = require("@fastify/cors");
 const rateLimit = require("@fastify/rate-limit");
 const crypto = require("crypto");
-const { validateInquiry } = require("./validate");
+const { validateInquiry, arizonaToday } = require("./validate");
 const { RateLimitedError } = require("./service");
+const { isRealDate, isRealMonth, addDays } = require("./availability/time");
 
 const BODY_LIMIT = 16 * 1024;
 
@@ -12,7 +13,7 @@ const BODY_LIMIT = 16 * 1024;
  * Builds the Fastify app. Dependencies are injected so tests can swap the database,
  * notifier, clock and outbound fetch without touching the network.
  */
-function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true, now = () => new Date() }) {
+function buildApp({ config, service, availability = null, fetchImpl = globalThis.fetch, logger = true, now = () => new Date() }) {
   const app = Fastify({
     logger, // default Fastify logging records method/url/status — never request bodies
     bodyLimit: BODY_LIMIT,
@@ -33,13 +34,13 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
 
   // API responses are per-request and personal: never cacheable.
   app.addHook("onSend", async (req, reply) => {
-    reply.header("Cache-Control", "no-store");
+    if (!reply.getHeader("cache-control")) reply.header("Cache-Control", "no-store");
   });
 
   // Exact-match CORS allowlist; no wildcard, no credentials/cookies are ever used.
   app.register(cors, {
     origin: (origin, cb) => cb(null, !origin || allowed.has(origin)),
-    methods: ["POST", "OPTIONS"],
+    methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
     maxAge: 600,
   });
@@ -137,8 +138,32 @@ function buildApp({ config, service, fetchImpl = globalThis.fetch, logger = true
       }
     );
 
+    // Public availability: per date, available or not, plus one overall "verified" flag. Never intervals,
+    // reasons, sources, labels or counts. When a required external calendar can't be verified every date
+    // comes back available:false with verified:false (never a silent "available").
+    if (availability) {
+      routesApp.get(
+        "/api/availability",
+        { config: { rateLimit: { max: 60, timeWindow: 10 * 60 * 1000 } } },
+        async (req, reply) => {
+          const keys = Object.keys(req.query || {});
+          const { month, date } = req.query || {};
+          const bad = keys.some((k) => k !== "month" && k !== "date") || (month === undefined) === (date === undefined) || (month !== undefined && typeof month !== "string") || (date !== undefined && typeof date !== "string");
+          const today = arizonaToday(now());
+          const lastMonth = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1 + 6, 1)).toISOString().slice(0, 7);
+          if (bad || (month !== undefined && !(isRealMonth(month) && month >= today.slice(0, 7) && month <= lastMonth)) || (date !== undefined && !(isRealDate(date) && date >= today && date <= addDays(today, availability.HORIZON_DAYS)))) {
+            return reply.code(400).send({ ok: false, error: "validation" });
+          }
+          const body = month !== undefined ? { ok: true, month, ...availability.month(month) } : { ok: true, ...availability.day(date) };
+          // Verified answers may be cached briefly (AC-F2.5); unverified ones never are.
+          reply.header("Cache-Control", body.verified ? "public, max-age=60" : "no-store");
+          return body;
+        }
+      );
+    }
+
     // Liveness + notification backlog (no PII). Not CORS-enabled for browsers' use.
-    routesApp.get("/health", async () => ({ ok: true, notifyBacklog: service.notifyBacklog() }));
+    routesApp.get("/health", async () => ({ ok: true, notifyBacklog: service.notifyBacklog(), ...(availability ? { calendar: availability.healthSummary() } : {}) }));
 
   });
 

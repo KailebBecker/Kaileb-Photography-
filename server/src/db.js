@@ -48,6 +48,36 @@ const MIGRATIONS = [
   CREATE INDEX inquiry_events_inquiry ON inquiry_events (inquiry_id, id);
   CREATE INDEX inquiries_session ON inquiries (session_date) WHERE status = 'confirmed';
   `,
+  // 3: availability. Manual blocks (owner-only private label), owner-set rules/settings, and the
+  // external-calendar cache: ONLY merged busy intervals (UTC ms) and sync status. No event titles,
+  // descriptions, attendees or locations are ever stored.
+  `
+  CREATE TABLE availability_blocks (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    start_date TEXT NOT NULL,
+    end_date   TEXT NOT NULL,
+    start_min  INTEGER,
+    end_min    INTEGER,
+    label      TEXT,
+    created_at TEXT NOT NULL,
+    CHECK (end_date >= start_date),
+    CHECK ((start_min IS NULL AND end_min IS NULL)
+        OR (start_min IS NOT NULL AND end_min IS NOT NULL AND start_min >= 0 AND end_min <= 1440 AND start_min < end_min))
+  );
+  CREATE INDEX availability_blocks_dates ON availability_blocks (start_date, end_date);
+  CREATE TABLE availability_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+  CREATE TABLE busy_cache (start_utc INTEGER NOT NULL, end_utc INTEGER NOT NULL);
+  CREATE INDEX busy_cache_start ON busy_cache (start_utc);
+  CREATE TABLE availability_state (
+    id              INTEGER PRIMARY KEY CHECK (id = 1),
+    last_attempt_at TEXT,
+    last_success_at TEXT,
+    window_from     INTEGER,
+    window_to       INTEGER,
+    last_error      TEXT,
+    failures        INTEGER NOT NULL DEFAULT 0
+  );
+  `,
 ];
 
 function openDatabase(file) {
